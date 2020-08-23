@@ -46,3 +46,5 @@ PS:This guide works for both options
 <img src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/wiring_diagram.png?raw=true"></a>
 
 <h1>THE CODE</h1>
+
+<h1>DEMO VIDEO</h1>
