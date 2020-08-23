@@ -44,4 +44,4 @@ PS:This guide works for both options
 
 <p>There are a number of connections to be made. Lining up the display with the top of the breadboard helps to identify its pins without too much counting, especially if the breadboard has its rows numbered with row 1 as the top row of the board. Do not forget, the long yellow lead that links the slider of the pot to pin 3 of the display. The potentiometer is used to control the contrast of the display.</p>
 
-<img src="https://github.com/isbkch/arduino-uno-irrigation/img/blob/master/schema.png?raw=true"></a>
+<img src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/wiring_diagram.png?raw=true"></a>
