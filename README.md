@@ -36,6 +36,7 @@ PS:This guide works for both options
 <p>Moisture is the presence of water, often in trace amounts. Small amounts of water may be found, for example, in the air (humidity), in foods, and in some commercial products. Moisture also refers to the amount of water vapor present in the air.</p>
 
 <h1>CAPACITIVE SENSOR</h1>
+
 <p>Inserted into the soil around the plants. This sensor can check whether your plant is thirsty by measuring the level of moisture in the soil</p>
 
 <h1>THE WIRING</h1>
