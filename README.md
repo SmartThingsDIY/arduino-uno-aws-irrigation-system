@@ -1,7 +1,9 @@
 <h3>I thought this code would help someone start their first Arduino project. So here it is.</h3>
 
 <h1>⚡️ COMPONENTS AND SUPPLIES</h1>
-<img align="right" src="https://camo.githubusercontent.com/fad070bc6625303c5e479bd64caa46060134a111/68747470733a2f2f73746f72652d63646e2e61726475696e6f2e63632f7573612f636174616c6f672f70726f647563742f63616368652f312f696d6167652f31303030783735302f66383837366133316236333533326262626134653738316333303032346130612f612f302f613030303036365f69736f5f315f332e6a7067" style="max-width:100%;" height="300">
+
+<img align="right" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/moisture.png?raw=true" style="max-width:100%;" height="300">
+
 <ul>
     <li><a href="https://amzn.to/2EqybyM">Arduino Uno</a></li>
     <li><a href="https://amzn.to/2Ei40tP">Breadboard</a></li>
@@ -30,7 +32,7 @@ PS:This guide works for both options
 <h1>BUY VS BUILD</h1>
 <p>You can always go ahead and buy a ready to use solution like this <a href="https://amzn.to/3laBGds">Self Watering System</a> for roughly the same cost. But if you're looking to learn Arduino development while doing a fun & useful project in the meantime, then stick around</p>
 
-<img align="right" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/moisture.png?raw=true" style="max-width:100%;" height="400">
+<img align="right" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/moisture_sensor.png?raw=true" style="max-width:100%;" height="400">
 
 <h1>What is moisture?</h1>
 <p>Moisture is the presence of water, often in trace amounts. Small amounts of water may be found, for example, in the air (humidity), in foods, and in some commercial products. Moisture also refers to the amount of water vapor present in the air.</p>
