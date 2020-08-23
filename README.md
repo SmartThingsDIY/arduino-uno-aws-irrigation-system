@@ -2,7 +2,7 @@
 
 <h1>⚡️ COMPONENTS AND SUPPLIES</h1>
 
-<img align="right" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/moisture.png?raw=true" style="max-width:100%;" height="300">
+<img align="right" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/moisture.png?raw=true" style="max-width:100%;" height="350">
 
 <ul>
     <li><a href="https://amzn.to/2EqybyM">Arduino Uno</a></li>
@@ -32,7 +32,7 @@ PS:This guide works for both options
 <h1>BUY VS BUILD</h1>
 <p>You can always go ahead and buy a ready to use solution like this <a href="https://amzn.to/3laBGds">Self Watering System</a> for roughly the same cost. But if you're looking to learn Arduino development while doing a fun & useful project in the meantime, then stick around</p>
 
-<img align="right" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/moisture_sensor.png?raw=true" style="max-width:100%;" height="400">
+<img align="right" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/moisture_sensor.png?raw=true" style="max-width:100%;" height="300">
 
 <h1>What is moisture?</h1>
 <p>Moisture is the presence of water, often in trace amounts. Small amounts of water may be found, for example, in the air (humidity), in foods, and in some commercial products. Moisture also refers to the amount of water vapor present in the air.</p>
