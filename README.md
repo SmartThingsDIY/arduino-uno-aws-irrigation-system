@@ -49,9 +49,10 @@ PS:This guide works for both options
 
 <h1>THE CODE</h1>
 Open Arduino IDE and chose <strong>Arduino UNO</strong> from the board manager<br><br>
-<img align="center" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/board.png?raw=true" style="max-width:100%;" height="300">
+<img align="center" src="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/img/board.png?raw=true" style="max-width:100%;" height="600">
 
 <br><br>
-Then paste the content of the file <a href="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/code.ino">code.ino</a> into a new Sketch
+Paste the content of the file <a href="https://github.com/isbkch/arduino-uno-irrigation-system/blob/master/code.ino">code.ino</a> into a new Sketch<br>
+Then compile and upload the code to your board
 
 <h1>DEMO VIDEO</h1>
