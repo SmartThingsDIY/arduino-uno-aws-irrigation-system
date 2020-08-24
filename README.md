@@ -110,6 +110,21 @@ void setup() {
   ```
 
 Finally, in the 'loop' function, cycle use the 'Serial.print' function to output the prompt information in the serial monitor, use the 'analogRead' function to read the sensor value. Then use the 'if' function to determine the sensor value, if the requirements are met, turn on the relay and using the 'digitalWrite' function to operate the pump, if not, then turn off the relay.
+
+```cpp
+void loop() {
+
+    Serial.print("Plant 1 - Moisture Level:");
+    sensor1Value = analogRead(Pin1);
+    Serial.println(sensor1Value);
+
+    if (sensor1Value > 450) {
+      digitalWrite(IN1, LOW);
+    } else {
+      digitalWrite(IN1, HIGH);
+    }
+    ...
+```
 <br><br>
 PS: <br>
 There are total four lines of 'if(value4>550)' in the 'loop' function. This is the statement that controls the start of the pump. The values inside need to be reset according to the water needs of the plants and flowers.
