@@ -15,9 +15,6 @@ float sensor4Value = 0;
 
 void setup() {
   Serial.begin(9600);
-  // for (int i = 1; i < 5; i++) {
-  //   pinMode(IN + i, OUTPUT);
-  // }
 
   pinMode(IN1, OUTPUT);
   pinMode(IN2, OUTPUT);
