@@ -84,7 +84,7 @@ float sensor3Value = 0;
 float sensor4Value = 0;
 ```
 
-In the 'setup()' function, mainly using 'Serial.begin()' function to set the serial port baud rate, using the 'pinMode' function to set the port input and output function of arduino. 'OUTPUT' indicates output function and 'INPUT' indicates input function.
+In the `setup()` function, mainly using `Serial.begin()` function to set the serial port baud rate, using the `pinMode` function to set the port input and output function of arduino. `OUTPUT` indicates output function and `INPUT` indicates input function.
 
 ```cpp
 void setup() {
@@ -109,7 +109,7 @@ void setup() {
   }
   ```
 
-Finally, in the 'loop' function, cycle use the 'Serial.print' function to output the prompt information in the serial monitor, use the 'analogRead' function to read the sensor value. Then use the 'if' function to determine the sensor value, if the requirements are met, turn on the relay and using the 'digitalWrite' function to operate the pump, if not, then turn off the relay.
+Finally, in the `loop()` function, cycle use the `Serial.print()` function to output the prompt information in the serial monitor, use the `analogRead` function to read the sensor value. Then use the `if` function to determine the sensor value, if the requirements are met, turn on the relay and using the `digitalWrite` function to operate the pump, if not, then turn off the relay.
 
 ```cpp
 void loop() {
@@ -124,9 +124,10 @@ void loop() {
       digitalWrite(IN1, HIGH);
     }
     ...
+}
 ```
 <br><br>
 PS: <br>
-There are total four lines of 'if(value4>550)' in the 'loop' function. This is the statement that controls the start of the pump. The values inside need to be reset according to the water needs of the plants and flowers.
+There are total four lines of `if(value4>550)` in the `loop()` function. This is the statement that controls the start of the pump. The values inside need to be reset according to the water needs of the plants and flowers.
 
 <h1>DEMO VIDEO</h1>
