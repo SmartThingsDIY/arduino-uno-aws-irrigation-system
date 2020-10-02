@@ -176,5 +176,5 @@ void loop() {
   }
   sendDataToWiFiBoard(preparedData, 1000, DEBUG);
 
-  delay(1000);
+  delay(5000); // 5 seconds
 }
