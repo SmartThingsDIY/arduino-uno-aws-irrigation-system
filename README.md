@@ -1,8 +1,9 @@
+# Connected Smart Irrigation System with Arduino Uno board, Soil capacitive sensor, ESP8266 WiFi module and AWS IOT
 
 ⚡️ COMPONENTS AND SUPPLIES
 ==========================
 
-![](https://github.com/isbkch/arduino-uno-aws-irrigation-system/blob/master/img/moisture.png?raw=true)
+<img align="right" src="https://github.com/MecaHumArduino/arduino-uno-aws-irrigation-system/blob/master/docs/moisture.png?raw=true" style="max-width:100%;" height="350">
 
 *   [Arduino Uno](https://amzn.to/2EqybyM)
 *   [Breadboard](https://amzn.to/2Ei40tP)
@@ -11,14 +12,26 @@
 *   [Capacitive Soil Moisture Sensor](https://amzn.to/3gn5FLN)
 *   [Submersible Mini Water Pumps](https://amzn.to/32hk9I1)
 *   [2 AA Battery Holder with Switch](https://amzn.to/2CPxNt8)
+*   [Hardware / Storage Cabinet Drawer](https://amzn.to/36ehDpB)
+*   [ESP8266 ESP-01 WiFi Module](https://amzn.to/30fUWNS)
+*   [ESP8266 ESP-01 programmable USB](https://amzn.to/345egi6)
+*   [ESP8266 ESP-01 Breadboard Adapter](https://amzn.to/3kSFVcP)
 
 There is now an ensemble kit that includes most of the required hardware: [WayinTop Automatic Irrigation DIY Kit](https://amzn.to/3aN5qsj). But you still need to purchase the [2 AA Battery Holder](https://amzn.to/2CPxNt8), the [Arduino Uno](https://amzn.to/2EqybyM) and the [Jumper Wires](https://amzn.to/2Ehh2ru)
 PS: This guide works for both options
 
-🚀APPS
+🖥 APPS
 ======
 
-*   [Arduino IDE](https://www.arduino.cc/en/main/software)
+*   [VSCode](https://code.visualstudio.com/)
+*   [Fritzing](https://fritzing.org/)
+*   [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+*   [PlatformIO](https://platformio.org/)
+
+📦 Libraries
+---------
+*   [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+*   [SoftwareSerial](https://www.arduino.cc/en/Reference.SoftwareSerial)
 
 ABOUT
 =====
@@ -28,9 +41,9 @@ This is an extremely popular DIY project because it automatically waters your pl
 BUY VS BUILD
 ============
 
-You can always go ahead and buy a ready to use a solution like this [Self Watering System](https://amzn.to/3laBGds) for roughly the same cost. But if you're looking to learn Arduino development while doing a fun & a useful project in the meantime, then stick around
+You can always go ahead and buy a ready to use a solution like this [Self Watering System](https://amzn.to/3laBGds) for roughly the same cost. But if you're looking to learn Arduino development while doing a fun and useful project in the meantime, then stick around
 
-![](https://github.com/isbkch/arduino-uno-aws-irrigation-system/blob/master/img/moisture_sensor.png?raw=true)
+<img align="right" src="https://github.com/MecaHumArduino/arduino-uno-aws-irrigation-system/blob/master/docs/moisture_sensor.png?raw=true" style="max-width:100%;" height="350">
 
 What is moisture?
 =================
@@ -47,20 +60,14 @@ THE WIRING
 
 There are a number of connections to be made. Lining up the display with the top of the breadboard helps to identify its pins without too much counting, especially if the breadboard has its rows numbered with row 1 as the top row of the board. Do not forget, the long yellow lead that links the slider of the pot to pin 3 of the display. The potentiometer is used to control the contrast of the display.
 
-![](https://github.com/isbkch/arduino-uno-aws-irrigation-system/blob/master/img/wiring_diagram.png?raw=true)
+<img align="center" src="https://github.com/MecaHumArduino/arduino-uno-aws-irrigation-system/blob/master/docs/wiring_diagram.png?raw=true" style="max-width:100%;" height="500">
 
 THE CODE
 ========
 
-Open Arduino IDE and chose **Arduino UNO** from the board manager
-
-![](https://github.com/isbkch/arduino-uno-aws-irrigation-system/blob/master/img/board.png?raw=true)
-
-Paste the content of the file [code.ino](https://github.com/isbkch/arduino-uno-aws-irrigation-system/blob/master/code.ino) into a new Sketch. Then compile and upload the code to your board
-
 ### Code Explanation
 
-In order to use Arduino to control the four-channel relay, we need to define four control pins of theArduino.
+In order to use Arduino to control the four-channel relay, we need to define four control pins of the Arduino.
 ```cpp
 int IN1 = 2;
 int IN2 = 3;
@@ -88,18 +95,22 @@ In the `setup()` function, mainly using `Serial.begin()` function to set the ser
 ```cpp
 void setup() {
     Serial.begin(9600);
+
     pinMode(IN1, OUTPUT);
     pinMode(IN2, OUTPUT);
     pinMode(IN3, OUTPUT);
     pinMode(IN4, OUTPUT);
+
     pinMode(Pin1, INPUT);
     pinMode(Pin2, INPUT);
     pinMode(Pin3, INPUT);
     pinMode(Pin4, INPUT);
+
     digitalWrite(IN1, HIGH);
     digitalWrite(IN2, HIGH);
     digitalWrite(IN3, HIGH);
     digitalWrite(IN4, HIGH);
+
     delay(500);
 }
 ```
@@ -110,6 +121,7 @@ void loop() {
     Serial.print("Plant 1 - Moisture Level:");
     sensor1Value = analogRead(Pin1);
     Serial.println(sensor1Value);
+
     if (sensor1Value > 450) {
         digitalWrite(IN1, LOW);
     } else {
