@@ -1,5 +1,10 @@
 # Connected Smart Irrigation System with Arduino Uno board, Soil capacitive sensor, ESP8266 WiFi module and AWS IOT
 
+This repo accompanies the "Connected Irrigation System" YouTube series. it contains the code, libraries, diagrams, and more information that I promised in the videos.
+
+[**Video 1: Building an IoT Irrigation System with Arduino, and Soil sensor**](https://youtu.be/vL6TKYhjwQc)
+This episode shows you how to use the [DHT11](https://amzn.to/2Qs9fcV) temperature and humidity sensors with the [Arduino Uno](https://amzn.to/2RnHhPY) board to build a weather station that displays current temperature and humidity on an [LCD](https://amzn.to/2FzJdT6) screen.
+
 ⚡️ COMPONENTS AND SUPPLIES
 ==========================
 
@@ -133,3 +138,7 @@ void loop() {
 
 PS:
 There are total four lines of `if(value4>550)` in the `loop()` function. This is the statement that controls the start of the pump. The values inside need to be reset according to the water needs of the plants and flowers.
+
+Next Step
+---------
+For code that goes into the WiFi board (ESP8266 ESP01) and more explanation, please head out to this repo: https://github.com/MecaHumArduino/esp8266-01-aws-mqtt
