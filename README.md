@@ -1,4 +1,3 @@
-### I thought this code would help someone start their first Arduino project. So here it is.
 
 ⚡️ COMPONENTS AND SUPPLIES
 ==========================
@@ -63,17 +62,26 @@ Paste the content of the file [code.ino](https://github.com/isbkch/arduino-uno-a
 
 In order to use Arduino to control the four-channel relay, we need to define four control pins of theArduino.
 ```cpp
-int IN1 = 2; int IN2 = 3; int IN3 = 4; int IN4 = 5;
+int IN1 = 2;
+int IN2 = 3;
+int IN3 = 4;
+int IN4 = 5;
 ```
 
 Since the value detected by the soil moisture sensor is an analog signal, so four analog ports are defined.
 ```cpp
-int Pin1 = A0; int Pin2 = A1; int Pin3 = A2; int Pin4 = A3;
+int Pin1 = A0;
+int Pin2 = A1;
+int Pin3 = A2;
+int Pin4 = A3;
 ```
 
 We need to use a variable to store the value detected by the sensor. Since there are four sensors, we define four variables.
 ```cpp
-float sensor1Value = 0; float sensor2Value = 0; float sensor3Value = 0; float sensor4Value = 0;
+float sensor1Value = 0;
+float sensor2Value = 0;
+float sensor3Value = 0;
+float sensor4Value = 0;
 ```
 
 In the `setup()` function, mainly using `Serial.begin()` function to set the serial port baud rate, using the `pinMode` function to set the port input and output function of arduino. `OUTPUT` indicates output function and `INPUT` indicates input function.
@@ -113,6 +121,3 @@ void loop() {
 
 PS:
 There are total four lines of `if(value4>550)` in the `loop()` function. This is the statement that controls the start of the pump. The values inside need to be reset according to the water needs of the plants and flowers.
-
-DEMO VIDEO
-==========
