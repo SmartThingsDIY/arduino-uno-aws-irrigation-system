@@ -2,8 +2,7 @@
 
 This repo accompanies the "Connected Irrigation System" YouTube series. it contains the code, libraries, diagrams, and more information that I promised in the videos.
 
-[**Video 1: Building an IoT Irrigation System with Arduino, and Soil sensor**](https://youtu.be/vL6TKYhjwQc)
-This episode shows you how to use the [DHT11](https://amzn.to/2Qs9fcV) temperature and humidity sensors with the [Arduino Uno](https://amzn.to/2RnHhPY) board to build a weather station that displays current temperature and humidity on an [LCD](https://amzn.to/2FzJdT6) screen.
+[**Video 1: Building an IoT Irrigation System with Arduino, and Soil sensor**](https://youtu.be/ehpQRTUynlg)
 
 ⚡️ COMPONENTS AND SUPPLIES
 ==========================

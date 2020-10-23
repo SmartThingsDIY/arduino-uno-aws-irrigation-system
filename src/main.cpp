@@ -1,5 +1,5 @@
 /**
-  @TODO ....
+  This is an extremely popular DIY project that allows you to automatically water your plants according to the level of moisture in the soil
   @author MecaHumArduino
   @version 3.0
 */
@@ -176,5 +176,5 @@ void loop() {
   }
   sendDataToWiFiBoard(preparedData, 1000, DEBUG);
 
-  delay(5000); // 5 seconds
+  delay(2000); // 2 seconds
 }
