@@ -2,7 +2,7 @@
 
 This repo accompanies the "Connected Irrigation System" YouTube series. it contains the code, libraries, diagrams, and more information that I promised in the videos.
 
-[**Video 1: Building an IoT Irrigation System with Arduino, and Soil sensor**](https://youtu.be/ehpQRTUynlg)
+[**Video 1: Building an IoT Irrigation System with Arduino, and Soil sensor**](https://www.youtube.com/watch?v=JdvnfENodak)
 
 ⚡️ COMPONENTS AND SUPPLIES
 ==========================
