@@ -9,17 +9,17 @@ This repo accompanies the "Connected Irrigation System" YouTube series. it conta
 
 <img align="right" src="https://github.com/MecaHumArduino/arduino-uno-aws-irrigation-system/blob/master/docs/moisture.png?raw=true" style="max-width:100%;" height="350">
 
-*   [Arduino Uno](https://amzn.to/2EqybyM)
-*   [Breadboard](https://amzn.to/2Ei40tP)
-*   [Jumper Wires](https://amzn.to/2Ehh2ru)
-*   [4 Channel Relay](https://amzn.to/3ggJbMs)
-*   [Capacitive Soil Moisture Sensor](https://amzn.to/3gn5FLN)
-*   [Submersible Mini Water Pumps](https://amzn.to/32hk9I1)
-*   [2 AA Battery Holder with Switch](https://amzn.to/2CPxNt8)
-*   [Hardware / Storage Cabinet Drawer](https://amzn.to/36ehDpB)
-*   [ESP8266 ESP-01 WiFi Module](https://amzn.to/30fUWNS)
-*   [ESP8266 ESP-01 programmable USB](https://amzn.to/345egi6)
-*   [ESP8266 ESP-01 Breadboard Adapter](https://amzn.to/3kSFVcP)
+* [Arduino Uno](https://amzn.to/2EqybyM)
+* [Breadboard](https://amzn.to/2Ei40tP)
+* [Jumper Wires](https://amzn.to/2Ehh2ru)
+* [4 Channel Relay](https://amzn.to/3ggJbMs)
+* [Capacitive Soil Moisture Sensor](https://amzn.to/3gn5FLN)
+* [Submersible Mini Water Pumps](https://amzn.to/32hk9I1)
+* [2 AA Battery Holder with Switch](https://amzn.to/2CPxNt8)
+* [Hardware / Storage Cabinet Drawer](https://amzn.to/36ehDpB)
+* [ESP8266 ESP-01 WiFi Module](https://amzn.to/30fUWNS)
+* [ESP8266 ESP-01 programmable USB](https://amzn.to/345egi6)
+* [ESP8266 ESP-01 Breadboard Adapter](https://amzn.to/3kSFVcP)
 
 There is now an ensemble kit that includes most of the required hardware: [WayinTop Automatic Irrigation DIY Kit](https://amzn.to/3aN5qsj). But you still need to purchase the [2 AA Battery Holder](https://amzn.to/2CPxNt8), the [Arduino Uno](https://amzn.to/2EqybyM) and the [Jumper Wires](https://amzn.to/2Ehh2ru)
 PS: This guide works for both options
@@ -27,15 +27,16 @@ PS: This guide works for both options
 🖥 APPS
 ======
 
-*   [VSCode](https://code.visualstudio.com/)
-*   [Fritzing](https://fritzing.org/)
-*   [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
-*   [PlatformIO](https://platformio.org/)
+* [VSCode](https://code.visualstudio.com/)
+* [Fritzing](https://fritzing.org/)
+* [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
+* [PlatformIO](https://platformio.org/)
 
 📦 Libraries
 ---------
-*   [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
-*   [SoftwareSerial](https://www.arduino.cc/en/Reference.SoftwareSerial)
+
+* [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
+* [SoftwareSerial](https://www.arduino.cc/en/Reference.SoftwareSerial)
 
 ABOUT
 =====
@@ -72,6 +73,7 @@ THE CODE
 ### Code Explanation
 
 In order to use Arduino to control the four-channel relay, we need to define four control pins of the Arduino.
+
 ```cpp
 int IN1 = 2;
 int IN2 = 3;
@@ -80,6 +82,7 @@ int IN4 = 5;
 ```
 
 Since the value detected by the soil moisture sensor is an analog signal, so four analog ports are defined.
+
 ```cpp
 int Pin1 = A0;
 int Pin2 = A1;
@@ -88,6 +91,7 @@ int Pin4 = A3;
 ```
 
 We need to use a variable to store the value detected by the sensor. Since there are four sensors, we define four variables.
+
 ```cpp
 float sensor1Value = 0;
 float sensor2Value = 0;
@@ -96,6 +100,7 @@ float sensor4Value = 0;
 ```
 
 In the `setup()` function, mainly using `Serial.begin()` function to set the serial port baud rate, using the `pinMode` function to set the port input and output function of arduino. `OUTPUT` indicates output function and `INPUT` indicates input function.
+
 ```cpp
 void setup() {
     Serial.begin(9600);
@@ -120,6 +125,7 @@ void setup() {
 ```
 
 Finally, in the `loop()` function, cycle use the `Serial.print()` function to output the prompt information in the serial monitor, use the `analogRead` function to read the sensor value. Then use the `if` function to determine the sensor value, if the requirements are met, turn on the relay and using the `digitalWrite` function to operate the pump, if not, then turn off the relay.
+
  ```cpp
 void loop() {
     Serial.print("Plant 1 - Moisture Level:");
@@ -140,4 +146,5 @@ There are total four lines of `if(value4>550)` in the `loop()` function. This is
 
 Next Step
 ---------
-For code that goes into the WiFi board (ESP8266 ESP01) and more explanation, please head out to this repo: https://github.com/MecaHumArduino/esp8266-01-aws-mqtt
+
+For code that goes into the WiFi board (ESP8266 ESP01) and more explanation, please head out to this repo: <https://github.com/MecaHumArduino/esp8266-01-aws-mqtt>
