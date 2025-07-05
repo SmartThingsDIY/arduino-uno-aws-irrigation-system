@@ -91,13 +91,16 @@ AI/ML Stack
 - **Memory Safety**: 100KB model size limits, automatic cleanup on failures
 - **Model Sanity Checks**: Test inference with known inputs before deployment
 - **Graceful Degradation**: 100% cloud → 85% ESP32 → 50% Arduino-only operation
-- **Non-blocking pump control**: Prevents system lockup during watering
-- **Emergency stop**: Serial commands "stop" or "emergency" halt all pumps immediately
-- **Sensor validation**: Bounds checking on all analog readings (0-1023)
-- **Sensor disconnection detection**: Monitors for faulty/disconnected sensors
-- **Timeout protection**: Marks sensors as disconnected after 30 seconds of invalid readings
-- **Consecutive error tracking**: Prevents false alarms from temporary sensor glitches
-- **Fallback values**: Uses safe defaults when non-critical sensors fail
+- **Watchdog Timer**: 8-second automatic recovery from system hangs
+- **Pump Failsafes**: Maximum 30-second watering cycles with 5-minute cooldowns
+- **Emergency Stop**: Serial commands "stop" or "emergency" halt all pumps immediately
+- **Sensor Failure Detection**: Stuck sensor detection and automatic fallback
+- **Memory Optimization**: 153.6% → targeting <100% RAM usage on Arduino Uno
+- **Non-blocking Control**: Prevents system lockup during watering operations
+- **Sensor Validation**: Bounds checking on all analog readings (0-1023)
+- **Timeout Protection**: Marks sensors as disconnected after failures
+- **Consecutive Error Tracking**: Prevents false alarms from temporary glitches
+- **Fallback Values**: Uses safe defaults when non-critical sensors fail
 
 #### 🔬 DHT22 Integration
 - **Temperature range**: -40°C to +80°C with validation

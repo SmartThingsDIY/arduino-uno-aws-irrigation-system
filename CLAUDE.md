@@ -33,12 +33,15 @@ This is a smart irrigation system that combines Arduino hardware control with AW
 - **Build Both**: `platformio run` (builds Arduino + ESP32)
 - **Test All**: `platformio test`
 
-### Production Validation (NEW)
+### Production Validation & Safety (NEW)
 
 - **Validate ML Models**: Check that TensorFlow Lite models load correctly
 - **Test Fallback System**: Ensure decision tree works when ML fails
-- **Memory Check**: Verify memory usage stays under limits
+- **Memory Check**: `platformio run -e uno` (target <100% RAM usage - currently 153.6%)
 - **Sanity Test**: Run model inference with known inputs
+- **Safety Test**: Upload code and test emergency stop commands ("stop", "emergency")
+- **Watchdog Test**: Verify 8-second automatic recovery from hangs
+- **Pump Failsafe**: Test 30-second maximum watering with 5-minute cooldowns
 
 ### Python Development
 
