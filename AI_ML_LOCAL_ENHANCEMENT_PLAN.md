@@ -55,16 +55,17 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
 - **Anomaly Detection**: Autoencoder for sensor fault detection
 - **Local Caching**: 7-day rolling sensor history
 
-### 3. Edge Gateway (Raspberry Pi Zero 2 W)
+### 3. ESP32 as Complete Edge Gateway
 
-**Specs**: 1GHz ARM, 512MB RAM, MicroSD storage
+**Specs**: 240MHz dual-core, 520KB RAM, 4MB Flash, WiFi/Bluetooth
 
 #### Implementation
 
-- **TensorFlow Lite**: Full irrigation prediction model
-- **OpenCV Lite**: Plant health analysis
-- **Local LLM**: Llama 3 2B quantized for offline assistant
-- **Federated Learning Client**: Model updates without raw data sharing
+- **TensorFlow Lite Micro**: Multiple quantized models
+- **WiFi Connectivity**: Direct cloud communication, OTA updates
+- **Web Server**: Local configuration interface
+- **MQTT Client**: Real-time data streaming
+- **Model Management**: Dynamic model loading and switching
 
 ## Detailed Implementation Plan
 
@@ -102,25 +103,25 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
    - Based on pressure, humidity trends
    - 70% accuracy for 3-day forecast
 
-### Phase 3: Edge Gateway Intelligence (Weeks 5-6)
+### Phase 3: ESP32 Complete Edge Intelligence (Weeks 5-6)
 
-1. **Computer Vision for Plant Health**
-   - MobileNet v3 for disease detection
-   - Color histogram analysis
-   - Growth stage classification
-   - <500ms inference time
+1. **WiFi-Enabled Smart Hub**
+   - Direct cloud connectivity (AWS IoT, MQTT)
+   - Local web interface for configuration
+   - OTA firmware and model updates
+   - Real-time data visualization
 
-2. **Local Language Model**
-   - Llama 3 2B with 4-bit quantization
-   - Domain-specific fine-tuning
-   - Irrigation knowledge base in vector DB
-   - Offline query response in <2s
+2. **Advanced ML Capabilities**
+   - Multiple TensorFlow Lite models
+   - Dynamic model switching based on conditions
+   - Edge-cloud hybrid inference
+   - Local data preprocessing and aggregation
 
-3. **Federated Learning**
-   - On-device model training
-   - Privacy-preserving updates
-   - Collaborative learning across devices
-   - Model improvement without cloud
+3. **Smart Connectivity Features**
+   - Bluetooth for mobile app configuration
+   - WiFi AP mode for initial setup
+   - Mesh networking with other ESP32 devices
+   - Offline operation with cloud sync when available
 
 ### Phase 4: Integration and Optimization (Weeks 7-8)
 
@@ -128,16 +129,14 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
 
    ```
    Arduino: Immediate response (<100ms)
-   ESP32: Short-term planning (<1s)
-   Pi Zero: Long-term optimization (<5s)
+   ESP32: Short-term planning + WiFi connectivity (<1s)
    Cloud: Advanced analytics (when available)
    ```
 
 2. **Graceful Degradation**
-   - Full functionality with cloud
-   - 90% functionality with Pi Zero
-   - 70% functionality with ESP32 only
-   - 50% functionality with Arduino only
+   - Full functionality with cloud connectivity
+   - 85% functionality with ESP32 offline (local ML + WiFi)
+   - 50% functionality with Arduino only (basic rules)
 
 3. **Energy Optimization**
    - Sleep modes between inferences
@@ -146,30 +145,28 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
 
 ## Hardware Requirements
 
-### Minimum (Current + ESP32 upgrade)
+### Minimum (ESP32 Basic)
 
 - Arduino Uno (existing)
-- ESP32 with 4MB flash
+- ESP32 DevKit (4MB flash, WiFi)
 - MicroSD card module (for data logging)
-- Total cost: ~$10 addition
+- Total cost: ~$15 addition
 
 ### Recommended (Full Edge AI)
 
 - Arduino Uno (existing)
-- ESP32 (upgrade from ESP32)
-- Raspberry Pi Zero 2 W
+- ESP32-S3 DevKit (8MB flash, WiFi, Bluetooth)
+- BME280 sensor (temperature, humidity, pressure)
 - 16GB MicroSD card
-- USB camera module
-- Total cost: ~$50 addition
+- Total cost: ~$35 addition
 
 ### Advanced (High Performance)
 
-- Arduino Mega 2560
-- ESP32-S3 with PSRAM
-- Raspberry Pi 4 (2GB)
-- Pi Camera Module v2
-- Coral USB Accelerator
-- Total cost: ~$150 addition
+- Arduino Mega 2560 (more sensors)
+- ESP32-S3 with PSRAM (16MB)
+- ESP32-CAM (for plant health monitoring)
+- Multiple sensor arrays
+- Total cost: ~$75 addition
 
 ## Model Specifications
 
@@ -235,24 +232,23 @@ class EdgeInference {
 };
 ```
 
-### 3. Raspberry Pi Gateway
+### 3. ESP32 Complete Edge Gateway
 
-```python
-class LocalIrrigationAI:
-    def __init__(self):
-        self.tflite_model = tf.lite.Interpreter("irrigation_model.tflite")
-        self.cv_model = cv2.dnn.readNet("plant_health.onnx")
-        self.llm = LlamaCpp("llama3-2b-irrigation.gguf")
-        self.vector_db = ChromaDB("irrigation_knowledge")
+```cpp
+class ESP32EdgeHub {
+    TFLiteMicro::Interpreter* moisturePredictor;
+    TFLiteMicro::Interpreter* anomalyDetector;
+    TFLiteMicro::Interpreter* weatherPredictor;
+    WiFiClient wifiClient;
+    PubSubClient mqttClient;
+    WebServer configServer;
     
-    def analyze_plant_health(self, image):
-        # Computer vision pipeline
-        
-    def answer_query(self, question):
-        # Local RAG implementation
-        
-    def federated_learning_round(self):
-        # Privacy-preserving model update
+    void connectWiFi();
+    void startWebServer();
+    void publishToCloud(SensorData& data, PredictionResult& result);
+    void handleOTAUpdate();
+    void syncModelsFromCloud();
+};
 ```
 
 ## Implementation Timeline
@@ -264,8 +260,8 @@ class LocalIrrigationAI:
 
 ### Month 2
 
-- Week 5-6: Raspberry Pi edge gateway setup
-- Week 7-8: System integration and testing
+- Week 5-6: ESP32 WiFi connectivity and web interface
+- Week 7-8: System integration and cloud connectivity
 
 ### Month 3
 

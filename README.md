@@ -21,10 +21,10 @@ This repo contains a smart irrigation system that combines Arduino hardware cont
 * [ESP32 Programmer](https://amzn.to/3XxYZ456) - If not using DevKit with built-in USB
 * [MicroSD Card Module](https://amzn.to/3XxYZ789) - For local data logging and model storage
 
-### Optional Edge AI Components
-* [Raspberry Pi Zero 2 W](https://amzn.to/3XxYZ012) - For advanced edge AI gateway
-* [USB Camera Module](https://amzn.to/3XxYZ345) - For plant health monitoring
-* [16GB MicroSD Card](https://amzn.to/3XxYZ678) - For Pi Zero storage
+### Optional Enhanced Components
+* [ESP32-S3 DevKit](https://amzn.to/3XxYZ012) - For advanced ML capabilities (8MB flash, PSRAM)
+* [ESP32-CAM](https://amzn.to/3XxYZ345) - For plant health monitoring via computer vision
+* [BME280 Sensor](https://amzn.to/3XxYZ678) - For temperature, humidity, and pressure
 
 There is now an ensemble kit that includes most of the required hardware: [WayinTop Automatic Irrigation DIY Kit](https://amzn.to/3aN5qsj). But you still need to purchase the [2 AA Battery Holder](https://amzn.to/2CPxNt8), the [Arduino Uno](https://amzn.to/2EqybyM) and the [Jumper Wires](https://amzn.to/2Ehh2ru)
 PS: This guide works for both options
@@ -35,8 +35,8 @@ AI/ML Stack
 ### Edge AI (Local Processing)
 * **Microcontroller ML**: Decision trees and lookup tables on Arduino (< 100ms response)
 * **ESP32 ML**: TensorFlow Lite Micro for moisture prediction and anomaly detection
-* **Edge Gateway**: Raspberry Pi Zero with local LLM (Llama 3 2B), computer vision, and federated learning
-* **Offline Operation**: 70% functionality without internet connection
+* **WiFi Connectivity**: ESP32 handles all cloud communication, OTA updates, and web interface
+* **Offline Operation**: 85% functionality without internet connection
 
 ### Cloud AI (Optional Enhancement)
 * **LLMs**: GPT-3.5/4, Llama 3 for advanced conversational AI
@@ -86,14 +86,10 @@ The system implements a multi-tier edge computing architecture for intelligent i
   - Bluetooth support for local config
   - Better TensorFlow Lite compatibility
 
-### Tier 3: Raspberry Pi Zero (Advanced Edge AI)
-* **Response Time**: < 5 seconds
-* **Capabilities**: Computer vision, local LLM, weather prediction
-* **ML Models**: Full TensorFlow Lite, Llama 3 2B, MobileNet v3
-
-### Tier 4: Cloud (When Available)
+### Tier 3: Cloud (When Available)
 * **Capabilities**: Model training, historical analysis, remote monitoring
-* **Benefits**: Advanced analytics, multi-site coordination
+* **Benefits**: Advanced analytics, multi-site coordination, OTA updates
+* **Access**: Via ESP32 WiFi connection
 
 ABOUT
 =====
@@ -222,36 +218,36 @@ Edge AI Implementation Progress
 
 **Location**: `edge-ai/esp32-ml/`
 
-### 📋 Phase 3: Advanced Edge Gateway (PLANNED)
-Set up Raspberry Pi Zero for complex AI:
-- Computer vision for plant health monitoring
-- Local LLM (Llama 3 2B) for offline assistance
-- Federated learning for privacy-preserving improvements
+### 📋 Phase 3: ESP32 WiFi Hub (PLANNED)
+ESP32 as complete edge gateway:
+- WiFi connectivity and cloud communication
+- Local web interface for configuration
+- OTA firmware and model updates
+- MQTT for real-time data streaming
 
-**Location**: `edge-ai/pi-gateway/` (coming soon)
+**Location**: `edge-ai/esp32-ml/` (web server and connectivity)
 
 ### 📋 Phase 4: Integration (PLANNED)
 Complete system integration with graceful degradation:
 - Full functionality with cloud connection
-- 90% functionality with Pi Zero only
-- 70% functionality with ESP32 only
+- 85% functionality with ESP32 offline
 - 50% functionality with Arduino only
 
 Key Benefits
 ============
 
 * **Latency**: Reduced from 2-5s (cloud) to <100ms (local)
-* **Reliability**: Works offline with 70% functionality
-* **Privacy**: Data processed locally, no cloud dependency
+* **Reliability**: Works offline with 85% functionality
+* **Privacy**: Data processed locally, no cloud dependency required
 * **Cost**: 90% reduction in API calls and cloud compute
-* **Energy**: 80% less WiFi usage with local processing
+* **Simplicity**: No additional gateway hardware needed
 
 Getting Started
 ===============
 
-1. **Minimal Upgrade** ($10): Replace ESP8266 with ESP32 for basic edge AI
-2. **Recommended** ($50): Add Raspberry Pi Zero 2 W for full edge capabilities
-3. **Advanced** ($150): Include camera and ML accelerator for maximum performance
+1. **Minimal Upgrade** ($15): Replace ESP8266 with ESP32 for basic edge AI + WiFi
+2. **Recommended** ($35): ESP32-S3 with enhanced sensors for full edge capabilities
+3. **Advanced** ($75): Multiple ESP32s with camera modules for maximum coverage
 
 For detailed implementation guide, see [AI_ML_LOCAL_ENHANCEMENT_PLAN.md](AI_ML_LOCAL_ENHANCEMENT_PLAN.md)
 
