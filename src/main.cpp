@@ -24,12 +24,27 @@
 
 #include "LocalMLEngine.h"
 #include <ArduinoJson.h>
+#include <DHT.h>
 
 // Pin definitions
 const int MOISTURE_PINS[4] = {A0, A1, A2, A3};
 const int RELAY_PINS[4] = {2, 3, 4, 5};
 const int TEMP_HUMIDITY_PIN = 6; // DHT22 sensor
 const int LIGHT_PIN = A4;        // LDR sensor
+
+// DHT22 sensor configuration
+#define DHT_TYPE DHT22
+DHT dht(TEMP_HUMIDITY_PIN, DHT_TYPE);
+
+// Sensor validation constants
+const int MIN_MOISTURE = 0;
+const int MAX_MOISTURE = 1023;
+const float MIN_TEMP = -40.0;
+const float MAX_TEMP = 80.0;
+const float MIN_HUMIDITY = 0.0;
+const float MAX_HUMIDITY = 100.0;
+const int MIN_LIGHT = 0;
+const int MAX_LIGHT = 1023;
 
 // Timing constants
 const unsigned long SENSOR_READ_INTERVAL = 2000;    // 2 seconds
@@ -39,6 +54,15 @@ const unsigned long SERIAL_REPORT_INTERVAL = 10000; // 10 seconds
 LocalMLEngine mlEngine;
 unsigned long lastSensorRead = 0;
 unsigned long lastSerialReport = 0;
+
+// Non-blocking pump control
+struct PumpState {
+    bool isActive;
+    unsigned long startTime;
+    unsigned long duration;
+    bool emergencyStop;
+};
+PumpState pumpStates[4] = {{false, 0, 0, false}};
 
 // Statistics
 unsigned long totalDecisions = 0;
@@ -55,6 +79,9 @@ void sendDataToESP32(int sensorIndex, const SensorData &sensorData, const Action
 void printStatusReport();
 float readTemperature();
 float readHumidity();
+void updatePumpStates();
+bool validateSensorReading(int sensorIndex, float value, float minVal, float maxVal);
+void emergencyStopAllPumps();
 
 void setup()
 {
@@ -69,6 +96,10 @@ void setup()
     }
 
     pinMode(LIGHT_PIN, INPUT);
+
+    // Initialize DHT22 sensor
+    dht.begin();
+    Serial.println("DHT22 sensor initialized");
 
     // Initialize ML engine
     if (!mlEngine.begin())
@@ -119,6 +150,9 @@ void loop()
         processAllSensors();
         lastSensorRead = currentTime;
     }
+
+    // Update pump states (non-blocking pump control)
+    updatePumpStates();
 
     // Periodic status report
     if (currentTime - lastSerialReport >= SERIAL_REPORT_INTERVAL)
@@ -307,16 +341,30 @@ void printStatusReport()
 
 float readTemperature()
 {
-    // Placeholder for temperature sensor reading
-    // Replace with actual DHT22 or other sensor reading
-    return 22.5; // Default temperature
+    float temperature = dht.readTemperature();
+    
+    // Validate sensor reading
+    if (isnan(temperature) || temperature < MIN_TEMP || temperature > MAX_TEMP)
+    {
+        Serial.println("ERROR: Invalid temperature reading from DHT22");
+        return 22.5; // Fallback to safe default
+    }
+    
+    return temperature;
 }
 
 float readHumidity()
 {
-    // Placeholder for humidity sensor reading
-    // Replace with actual DHT22 or other sensor reading
-    return 60.0; // Default humidity
+    float humidity = dht.readHumidity();
+    
+    // Validate sensor reading
+    if (isnan(humidity) || humidity < MIN_HUMIDITY || humidity > MAX_HUMIDITY)
+    {
+        Serial.println("ERROR: Invalid humidity reading from DHT22");
+        return 60.0; // Fallback to safe default
+    }
+    
+    return humidity;
 }
 
 // Serial command processing (optional)
