@@ -10,29 +10,14 @@
 // DO NOT DUPLICATE THESE DEFINITIONS - always include this header instead.
 // =============================================================================
 
-// Plant type constants - 20 supported plant types
+// Plant type constants - 5 supported plant types (memory optimized)
 enum PlantType
 {
     TOMATO = 0,
     LETTUCE,
     BASIL,
-    MINT,
-    PEPPER,
-    ROSE,
-    SUNFLOWER,
-    MARIGOLD,
-    PETUNIA,
-    DAISY,
-    STRAWBERRY,
-    BLUEBERRY,
-    RASPBERRY,
-    GRAPE,
-    CACTUS,
-    SUCCULENT,
-    FERN,
-    ORCHID,
-    BAMBOO,
-    LAVENDER
+    GENERIC,  // Generic fallback plant
+    SUCCULENT
 };
 
 // Growth stage constants - 5 growth stages

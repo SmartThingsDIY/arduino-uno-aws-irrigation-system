@@ -24,7 +24,7 @@ struct PlantCharacteristics {
 class LookupTable {
 private:
     // Plant database stored in program memory (PROGMEM)
-    static const PlantCharacteristics PLANT_DATABASE[20] PROGMEM;
+    static const PlantCharacteristics PLANT_DATABASE[5] PROGMEM;
     
     // Runtime adjustable thresholds
     float customThresholds[20][3]; // [plant_type][moisture, temp, humidity]

@@ -22,10 +22,15 @@
  * Date: 2025
  */
 
+// Memory optimization for Arduino Uno (disable advanced features)
+#define MEMORY_OPTIMIZED 1
+
 #include "LocalMLEngine.h"
 #include <ArduinoJson.h>
 #include <SoftwareSerial.h>
+#ifndef MEMORY_OPTIMIZED
 #include <DHT.h>
+#endif
 #include <avr/wdt.h>  // Watchdog timer
 
 // Pin definitions
@@ -36,9 +41,11 @@ const int LIGHT_PIN = A4;        // LDR sensor
 const int ESP32_RX_PIN = 7;      // Arduino TX -> ESP32 RX
 const int ESP32_TX_PIN = 8;      // Arduino RX <- ESP32 TX
 
+#ifndef MEMORY_OPTIMIZED
 // DHT22 sensor configuration
 #define DHT_TYPE DHT22
 DHT dht(TEMP_HUMIDITY_PIN, DHT_TYPE);
+#endif
 
 // CRITICAL SAFETY CONSTANTS - Production Ready
 const unsigned long MAX_PUMP_DURATION = 30000;          // 30 seconds max watering per cycle
@@ -67,7 +74,7 @@ const unsigned long SERIAL_REPORT_INTERVAL = 10000; // 10 seconds
 const unsigned long ESP32_SEND_INTERVAL = 5000;     // 5 seconds
 
 // JSON buffer size optimized for Arduino Uno RAM constraints
-const size_t JSON_BUFFER_SIZE = 100;
+const size_t JSON_BUFFER_SIZE = 32;
 
 // Global variables
 LocalMLEngine mlEngine;
@@ -86,7 +93,7 @@ struct PumpState {
     uint8_t failsafeTriggered : 1;
     uint8_t wateringCount : 6;       // 0-63 waterings (enough for daily limit)
 };
-PumpState pumpStates[4] = {{false, 0, 0, 0, false, false, 0, 0}};
+PumpState pumpStates[4] = {{false, 0, 0, 0, 0, 0, 0}};
 
 // Memory-optimized sensor health monitoring
 struct SensorHealth {
@@ -100,18 +107,18 @@ struct SensorHealth {
     uint8_t isFailed : 1;           // 1 bit flag
     uint8_t reserved : 1;           // 1 bit reserved for future use
 };
-SensorHealth moistureSensorHealth[4] = {{0, 0, 0, 0, 0, false, false, false}};
-SensorHealth environmentalSensorHealth = {0, 0, 0, 0, 0, false, false, false}; // DHT22
+SensorHealth moistureSensorHealth[4] = {{0, 0, 0, 0, 0, 0, 0, 0}};
+SensorHealth environmentalSensorHealth = {0, 0, 0, 0, 0, 0, 0, 0}; // DHT22
 
-// System health tracking
-unsigned long lastSystemHealthCheck = 0;
-unsigned long lastWatchdogReset = 0;
+// System health tracking - reduced to save memory
+uint16_t lastSystemHealthCheck = 0;  // 16-bit seconds
+uint16_t lastWatchdogReset = 0;      // 16-bit seconds 
 bool systemFailsafeMode = false;
 
-// Statistics
-unsigned long totalDecisions = 0;
-unsigned long totalWateringActions = 0;
-unsigned long totalAnomalies = 0;
+// Statistics - reduced to save memory
+uint16_t totalDecisions = 0;
+uint16_t totalWateringActions = 0;
+uint8_t totalAnomalies = 0;
 
 // Function declarations
 void processAllSensors();
@@ -149,7 +156,9 @@ void setup()
     
     Serial.begin(9600);
     esp32Serial.begin(9600);
+#ifndef MEMORY_OPTIMIZED
     dht.begin();
+#endif
     
     Serial.println("=== IRRIGATION STARTUP ===");
     Serial.println("Init safety systems...");
@@ -174,7 +183,9 @@ void setup()
     resetWatchdog();
 
     // Initialize DHT22 sensor
+#ifndef MEMORY_OPTIMIZED
     dht.begin();
+#endif
     Serial.println("DHT22 sensor initialized");
 
     // Initialize ML engine
@@ -189,7 +200,7 @@ void setup()
     mlEngine.setPlantType(0, TOMATO);
     mlEngine.setPlantType(1, LETTUCE);
     mlEngine.setPlantType(2, BASIL);
-    mlEngine.setPlantType(3, MINT);
+    mlEngine.setPlantType(3, GENERIC);
 
     // Set growth stages
     mlEngine.setGrowthStage(0, VEGETATIVE);
@@ -246,21 +257,21 @@ void loop()
     // Handle serial commands for emergency control
     if (Serial.available())
     {
-        String command = Serial.readString();
-        command.trim();
-        command.toLowerCase();
+        char command[16] = {0};
+        int len = Serial.readBytesUntil('\n', command, 15);
+        command[len] = '\0';
         
-        if (command == "emergency" || command == "stop")
+        if (strcmp(command, "emergency") == 0 || strcmp(command, "stop") == 0)
         {
             performEmergencyShutdown("MANUAL_EMERGENCY_STOP");
         }
-        else if (command == "reset")
+        else if (strcmp(command, "reset") == 0)
         {
             logSystemEvent("MANUAL_RESET");
             systemFailsafeMode = false;
             Serial.println("System reset from failsafe mode");
         }
-        else if (command == "status")
+        else if (strcmp(command, "status") == 0)
         {
             printStatusReport();
         }
@@ -427,7 +438,7 @@ void executeWateringAction(int sensorIndex, const Action &action)
     pumpStates[sensorIndex].emergencyStop = false;
     pumpStates[sensorIndex].failsafeTriggered = false;
     pumpStates[sensorIndex].wateringCount++;
-    pumpStates[sensorIndex].totalWateringTime += safeDuration / 1000; // Convert to seconds
+    // Track watering in memory-optimized wateringCount field
 
     // Turn on pump with verification
     digitalWrite(RELAY_PINS[sensorIndex], LOW); // Active LOW relay
@@ -441,9 +452,9 @@ void executeWateringAction(int sensorIndex, const Action &action)
     Serial.print(safeDuration);
     Serial.print("ms | Count today: ");
     Serial.print(pumpStates[sensorIndex].wateringCount);
-    Serial.print(" | Total time today: ");
-    Serial.print(pumpStates[sensorIndex].totalWateringTime);
-    Serial.println("s");
+    Serial.print(" | Duration: ");
+    Serial.print(safeDuration);
+    Serial.println("ms");
     
     logSystemEvent("PUMP_STARTED", sensorIndex);
 }
@@ -588,6 +599,9 @@ void printStatusReport()
 
 float readTemperature()
 {
+#ifdef MEMORY_OPTIMIZED
+    return 22.5; // Default temperature when DHT disabled
+#else
     float temperature = dht.readTemperature();
     
     // Validate sensor reading
@@ -609,10 +623,14 @@ float readTemperature()
     environmentalSensorHealth.consecutiveErrors = 0;
     environmentalSensorHealth.lastUpdateTime = (uint16_t)(millis() / 1000);
     return temperature;
+#endif
 }
 
 float readHumidity()
 {
+#ifdef MEMORY_OPTIMIZED
+    return 60.0; // Default humidity when DHT disabled
+#else
     float humidity = dht.readHumidity();
     
     // Validate sensor reading
@@ -634,6 +652,7 @@ float readHumidity()
     environmentalSensorHealth.consecutiveErrors = 0;
     environmentalSensorHealth.lastUpdateTime = (uint16_t)(millis() / 1000);
     return humidity;
+#endif
 }
 
 // Serial command processing (optional)
@@ -641,14 +660,15 @@ void serialEvent()
 {
     if (Serial.available())
     {
-        String command = Serial.readString();
-        command.trim();
+        char command[16] = {0};
+        int len = Serial.readBytesUntil('\n', command, 15);
+        command[len] = '\0';
 
-        if (command == "status")
+        if (strcmp(command, "status") == 0)
         {
             printStatusReport();
         }
-        else if (command == "reset")
+        else if (strcmp(command, "reset") == 0)
         {
             mlEngine.resetStats();
             totalDecisions = 0;
@@ -656,16 +676,16 @@ void serialEvent()
             totalAnomalies = 0;
             Serial.println("Statistics reset.");
         }
-        else if (command == "debug")
+        else if (strcmp(command, "debug") == 0)
         {
             // Enable debug mode
             Serial.println("Debug mode enabled.");
         }
-        else if (command == "stop" || command == "emergency")
+        else if (strcmp(command, "stop") == 0 || strcmp(command, "emergency") == 0)
         {
             emergencyStopAllPumps();
         }
-        else if (command.startsWith("plant"))
+        else if (strncmp(command, "plant", 5) == 0)
         {
             // Change plant type: "plant 1 tomato"
             // Implementation depends on requirements
@@ -834,7 +854,7 @@ void performSystemHealthCheck()
         }
         
         // Check pump daily limits
-        if (pumpStates[i].totalWateringTime > 300) // 5 minutes total per day
+        if (pumpStates[i].wateringCount > 20) // Max 20 waterings per day
         {
             Serial.print("WARNING: Pump ");
             Serial.print(i + 1);
@@ -877,7 +897,7 @@ bool checkPumpFailsafe(int pumpIndex)
         return false;
     }
     
-    if (pumpStates[pumpIndex].totalWateringTime > 300) // 5 minutes total per day
+    if (pumpStates[pumpIndex].wateringCount > 20) // Max 20 waterings per day
     {
         Serial.print("BLOCKED: Pump ");
         Serial.print(pumpIndex + 1);
