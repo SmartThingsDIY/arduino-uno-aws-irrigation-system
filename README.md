@@ -24,6 +24,14 @@ This repo accompanies the "Connected Irrigation System" YouTube series. it conta
 There is now an ensemble kit that includes most of the required hardware: [WayinTop Automatic Irrigation DIY Kit](https://amzn.to/3aN5qsj). But you still need to purchase the [2 AA Battery Holder](https://amzn.to/2CPxNt8), the [Arduino Uno](https://amzn.to/2EqybyM) and the [Jumper Wires](https://amzn.to/2Ehh2ru)
 PS: This guide works for both options
 
+AI/ML Stack
+=====
+
+* **LLMs**: GPT-3.5/4, Llama 3 for conversational AI
+* **Frameworks**: LangChain for orchestration, TensorFlow Lite for edge ML
+* **Vector DB**: Pinecone/Chroma for RAG implementation
+* **ML Models**: Random Forest for predictions, LSTM for time-series
+
 🖥 APPS
 ======
 
@@ -37,6 +45,15 @@ PS: This guide works for both options
 
 * [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
 * [SoftwareSerial](https://www.arduino.cc/en/Reference.SoftwareSerial)
+
+Cloud Infrastructure
+=====
+
+* **AWS IoT Core**: Device management and data ingestion
+* **AWS Lambda**: Serverless compute for AI inference
+* **API**: FastAPI for REST endpoints
+* **Storage**: S3 for historical data, DynamoDB for real-time
+
 
 ABOUT
 =====
