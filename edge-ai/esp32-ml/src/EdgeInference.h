@@ -7,6 +7,7 @@
 #include "tensorflow/lite/micro/micro_interpreter.h"
 #include "tensorflow/lite/schema/schema_generated.h"
 #include "DataBuffer.h"
+#include "../models/irrigation_models.h"
 
 // Model size constraints for ESP32
 #define MAX_MODEL_SIZE 100000  // 100KB max per model
@@ -116,6 +117,13 @@ public:
     size_t getTotalMemoryUsage();
     void printModelInfo();
     void printDebugInfo();
+    
+    // Production safety methods
+    bool validatePrediction(const PredictionResult& result);
+    PredictionResult getFallbackPrediction(const SensorData& currentData);
+    bool isReasonablePrediction(float value, ModelType type);
+    void sanitizePrediction(PredictionResult& result);
+    bool performModelSanityCheck(ModelType type);
 };
 
 #endif // EDGE_INFERENCE_H

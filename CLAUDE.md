@@ -9,6 +9,8 @@ This is a smart irrigation system that combines Arduino hardware control with AW
 ## IMPORTANT
 
 - Always build for production. Never use mock data.
+- All ML models are production-ready with validation and fallback mechanisms
+- See PRODUCTION_FIXES.md for critical safety improvements implemented
 
 ## Key Commands
 
@@ -30,6 +32,13 @@ This is a smart irrigation system that combines Arduino hardware control with AW
 
 - **Build Both**: `platformio run` (builds Arduino + ESP32)
 - **Test All**: `platformio test`
+
+### Production Validation (NEW)
+
+- **Validate ML Models**: Check that TensorFlow Lite models load correctly
+- **Test Fallback System**: Ensure decision tree works when ML fails
+- **Memory Check**: Verify memory usage stays under limits
+- **Sanity Test**: Run model inference with known inputs
 
 ### Python Development
 

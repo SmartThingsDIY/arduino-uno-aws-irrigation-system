@@ -1,4 +1,5 @@
 #include "EdgeInference.h"
+#include "../models/irrigation_models.h"
 
 // Global configuration
 static float confidenceThreshold = 0.7;
@@ -64,6 +65,39 @@ bool EdgeInference::begin() {
     Serial.print("EdgeInference initialized. Available memory: ");
     Serial.print(getAvailableMemory());
     Serial.println(" bytes");
+    
+    // Load default models
+    bool modelsLoaded = true;
+    
+    Serial.println("Loading LSTM moisture prediction model...");
+    if (!loadModel(MODEL_MOISTURE_LSTM, moisture_lstm_model, moisture_lstm_model_len)) {
+        Serial.println("Warning: Failed to load LSTM model, fallback mode will be used");
+        modelsLoaded = false;
+    } else {
+        if (!performModelSanityCheck(MODEL_MOISTURE_LSTM)) {
+            Serial.println("Warning: LSTM model failed sanity check");
+            unloadModel(MODEL_MOISTURE_LSTM);
+            modelsLoaded = false;
+        }
+    }
+    
+    Serial.println("Loading anomaly detection model...");
+    if (!loadModel(MODEL_ANOMALY_AUTOENCODER, anomaly_autoencoder_model, anomaly_autoencoder_model_len)) {
+        Serial.println("Warning: Failed to load anomaly model, basic detection will be used");
+        modelsLoaded = false;
+    } else {
+        if (!performModelSanityCheck(MODEL_ANOMALY_AUTOENCODER)) {
+            Serial.println("Warning: Anomaly model failed sanity check");
+            unloadModel(MODEL_ANOMALY_AUTOENCODER);
+            modelsLoaded = false;
+        }
+    }
+    
+    if (modelsLoaded) {
+        Serial.println("All ML models loaded and validated successfully");
+    } else {
+        Serial.println("Some models failed to load - system will use fallback algorithms");
+    }
     
     return true;
 }
@@ -151,13 +185,22 @@ bool EdgeInference::loadModelFromMemory(ModelType type, const unsigned char* dat
 PredictionResult EdgeInference::predict24Hours() {
     PredictionResult result;
     
+    // Check if ML model is available and working
     if (!isModelLoaded(MODEL_MOISTURE_LSTM)) {
-        Serial.println("Error: Moisture LSTM model not loaded");
-        return result;
+        Serial.println("Warning: LSTM model not available, using fallback prediction");
+        SensorData currentData;
+        if (sensorBuffer->getLatestData(&currentData)) {
+            return getFallbackPrediction(currentData);
+        }
+        return result; // Return empty result if no data
     }
     
     if (!sensorBuffer->hasMinimumData(168)) { // Need 7 days of data
-        Serial.println("Warning: Insufficient data for 24-hour prediction");
+        Serial.println("Warning: Insufficient data for ML prediction, using simplified fallback");
+        SensorData currentData;
+        if (sensorBuffer->getLatestData(&currentData)) {
+            return getFallbackPrediction(currentData);
+        }
         return result;
     }
     
@@ -200,7 +243,20 @@ PredictionResult EdgeInference::predict24Hours() {
     // Calculate confidence
     result.confidence = calculateConfidence(result.moistureForecast, 24);
     result.timestamp = millis();
-    result.isValid = (result.confidence > confidenceThreshold);
+    
+    // Validate and sanitize prediction
+    if (validatePrediction(result)) {
+        sanitizePrediction(result);
+        result.isValid = (result.confidence > confidenceThreshold);
+    } else {
+        Serial.println("Warning: ML prediction failed validation, using fallback");
+        free(features);
+        SensorData currentData;
+        if (sensorBuffer->getLatestData(&currentData)) {
+            return getFallbackPrediction(currentData);
+        }
+        return result; // Return empty result
+    }
     
     free(features);
     
@@ -538,4 +594,177 @@ void EdgeInference::printDebugInfo() {
             sensorBuffer->printStatistics();
         }
     }
+}
+
+// Production safety methods implementation
+bool EdgeInference::validatePrediction(const PredictionResult& result) {
+    // Check if all values are reasonable for moisture predictions
+    for (int i = 0; i < 24; i++) {
+        if (!isReasonablePrediction(result.moistureForecast[i], MODEL_MOISTURE_LSTM)) {
+            Serial.print("Unreasonable prediction at hour ");
+            Serial.print(i);
+            Serial.print(": ");
+            Serial.println(result.moistureForecast[i]);
+            return false;
+        }
+    }
+    
+    // Check confidence bounds
+    if (result.confidence < 0.0f || result.confidence > 1.0f) {
+        Serial.print("Invalid confidence: ");
+        Serial.println(result.confidence);
+        return false;
+    }
+    
+    // Check for NaN or infinite values
+    for (int i = 0; i < 24; i++) {
+        if (isnan(result.moistureForecast[i]) || isinf(result.moistureForecast[i])) {
+            Serial.println("NaN or infinite value in prediction");
+            return false;
+        }
+    }
+    
+    return true;
+}
+
+PredictionResult EdgeInference::getFallbackPrediction(const SensorData& currentData) {
+    PredictionResult result;
+    
+    Serial.println("Using fallback decision tree for prediction");
+    
+    // Use simple decision tree when ML models fail
+    float features[7] = {
+        currentData.moisture,
+        currentData.temperature,
+        currentData.humidity,
+        currentData.lightLevel,
+        currentData.soilTemperature,
+        currentData.windSpeed,
+        currentData.pressure
+    };
+    
+    // Navigate decision tree
+    uint8_t nodeIndex = 0;
+    while (!fallback_tree[nodeIndex].isLeaf && nodeIndex < fallback_tree_size) {
+        float feature = features[fallback_tree[nodeIndex].featureIndex];
+        if (feature < fallback_tree[nodeIndex].threshold) {
+            nodeIndex = fallback_tree[nodeIndex].leftChild;
+        } else {
+            nodeIndex = fallback_tree[nodeIndex].rightChild;
+        }
+    }
+    
+    // Get prediction from leaf node
+    float baseValue = fallback_tree[nodeIndex].prediction;
+    
+    // Create simple 24-hour forecast with gradual change
+    for (int i = 0; i < 24; i++) {
+        // Simple linear interpolation with seasonal variation
+        float hourFactor = 1.0f + 0.1f * sin(2.0f * PI * i / 24.0f); // Daily variation
+        result.moistureForecast[i] = constrain(baseValue * hourFactor, 0.0f, 100.0f);
+    }
+    
+    result.confidence = 0.6f; // Lower confidence for fallback
+    result.timestamp = millis();
+    result.isValid = true;
+    result.anomalyScore = 0.0f;
+    
+    Serial.print("Fallback prediction: ");
+    Serial.print(baseValue);
+    Serial.println("% base moisture level");
+    
+    return result;
+}
+
+bool EdgeInference::isReasonablePrediction(float value, ModelType type) {
+    switch (type) {
+        case MODEL_MOISTURE_LSTM:
+            return (value >= lstm_validation.minOutput && 
+                    value <= lstm_validation.maxOutput);
+                    
+        case MODEL_ANOMALY_AUTOENCODER:
+            return (value >= autoencoder_validation.minOutput && 
+                    value <= autoencoder_validation.maxOutput);
+                    
+        default:
+            return (value >= 0.0f && value <= 100.0f); // Generic bounds
+    }
+}
+
+void EdgeInference::sanitizePrediction(PredictionResult& result) {
+    // Clamp values to safe ranges
+    for (int i = 0; i < 24; i++) {
+        result.moistureForecast[i] = constrain(result.moistureForecast[i], 
+                                             lstm_validation.minOutput, 
+                                             lstm_validation.maxOutput);
+    }
+    
+    // Ensure confidence is within bounds
+    result.confidence = constrain(result.confidence, 0.0f, 1.0f);
+    
+    // Ensure anomaly score is within bounds
+    result.anomalyScore = constrain(result.anomalyScore, 0.0f, 1.0f);
+    
+    // Apply smoothing to remove extreme jumps
+    for (int i = 1; i < 24; i++) {
+        float diff = abs(result.moistureForecast[i] - result.moistureForecast[i-1]);
+        if (diff > 20.0f) { // Max 20% change per hour
+            result.moistureForecast[i] = result.moistureForecast[i-1] + 
+                                       (result.moistureForecast[i] > result.moistureForecast[i-1] ? 20.0f : -20.0f);
+        }
+    }
+}
+
+bool EdgeInference::performModelSanityCheck(ModelType type) {
+    if (!isModelLoaded(type)) {
+        return false;
+    }
+    
+    Serial.print("Performing sanity check for model ");
+    Serial.println(type);
+    
+    // Create test input with known values
+    float testInput[168 * FEATURES_PER_SAMPLE];
+    for (int i = 0; i < 168 * FEATURES_PER_SAMPLE; i++) {
+        testInput[i] = 0.5f; // Neutral values
+    }
+    
+    // Prepare input tensor
+    if (!prepareInputTensor(type, testInput, 168 * FEATURES_PER_SAMPLE)) {
+        Serial.println("Sanity check failed: Cannot prepare input");
+        return false;
+    }
+    
+    // Run inference
+    TfLiteStatus status = interpreters[type]->Invoke();
+    if (status != kTfLiteOk) {
+        Serial.println("Sanity check failed: Inference error");
+        return false;
+    }
+    
+    // Get output tensor
+    TfLiteTensor* output = interpreters[type]->output(0);
+    if (output == nullptr) {
+        Serial.println("Sanity check failed: No output tensor");
+        return false;
+    }
+    
+    // Check output reasonableness
+    const ModelValidation* validation = (type == MODEL_MOISTURE_LSTM) ? 
+                                       &lstm_validation : &autoencoder_validation;
+    
+    for (int i = 0; i < validation->outputSize; i++) {
+        float value = output->data.f[i];
+        if (isnan(value) || isinf(value) || 
+            value < validation->minOutput || value > validation->maxOutput) {
+            Serial.print("Sanity check failed: Invalid output at index ");
+            Serial.print(i);
+            Serial.print(": ");
+            Serial.println(value);
+            return false;
+        }
+    }
+    
+    Serial.println("Model sanity check passed");
+    return true;
 }
