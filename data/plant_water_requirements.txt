@@ -1,0 +1,204 @@
+PLANT-SPECIFIC WATER REQUIREMENTS DATABASE
+=========================================
+
+VEGETABLES
+----------
+
+TOMATOES (Solanum lycopersicum)
+- Optimal soil moisture: 60-70%
+- Water needs: High (1-2 inches/week)
+- Critical periods: Flowering and fruit development
+- Frequency: Every 2-3 days in summer, weekly in spring/fall
+- Amount per plant: 1-2 gallons per week for mature plants
+- Special notes: Consistent watering prevents blossom end rot
+- Drought tolerance: Low-Medium
+- Signs of stress: Wilting during day, flower drop, cracked fruits
+
+LETTUCE (Lactuca sativa)
+- Optimal soil moisture: 70-80%
+- Water needs: High (1-1.5 inches/week)
+- Critical periods: Entire growing season
+- Frequency: Every 1-2 days in summer
+- Amount per plant: 0.5 gallons per week
+- Special notes: Shallow roots require frequent light watering
+- Drought tolerance: Low
+- Signs of stress: Bitter taste, bolting, wilting
+
+CARROTS (Daucus carota)
+- Optimal soil moisture: 60-70%
+- Water needs: Moderate (1 inch/week)
+- Critical periods: Germination and root development
+- Frequency: Every 3-4 days
+- Amount per plant: 0.25 gallons per week
+- Special notes: Deep watering encourages straight roots
+- Drought tolerance: Medium
+- Signs of stress: Forked roots, woody texture
+
+PEPPERS (Capsicum annuum)
+- Optimal soil moisture: 50-60%
+- Water needs: Moderate (1-1.5 inches/week)
+- Critical periods: Flowering and fruit set
+- Frequency: Every 3-4 days
+- Amount per plant: 1 gallon per week
+- Special notes: Slight water stress can increase heat in hot peppers
+- Drought tolerance: Medium
+- Signs of stress: Flower drop, sunscald on fruits
+
+CUCUMBERS (Cucumis sativus)
+- Optimal soil moisture: 70-80%
+- Water needs: High (1-2 inches/week)
+- Critical periods: Flowering through harvest
+- Frequency: Daily in hot weather
+- Amount per plant: 1-2 gallons per week
+- Special notes: Inconsistent watering causes bitter fruit
+- Drought tolerance: Low
+- Signs of stress: Bitter taste, misshapen fruits
+
+BEANS (Phaseolus vulgaris)
+- Optimal soil moisture: 60-70%
+- Water needs: Moderate (1 inch/week)
+- Critical periods: Flowering and pod development
+- Frequency: Every 3-4 days
+- Amount per plant: 0.5 gallons per week
+- Special notes: Avoid overhead watering to prevent disease
+- Drought tolerance: Medium
+- Signs of stress: Pod drop, stringy texture
+
+HERBS
+-----
+
+BASIL (Ocimum basilicum)
+- Optimal soil moisture: 60-70%
+- Water needs: Moderate-High
+- Critical periods: Active growth season
+- Frequency: Every 2-3 days
+- Amount per plant: 0.5 gallons per week
+- Special notes: Morning watering prevents fungal issues
+- Drought tolerance: Low-Medium
+- Signs of stress: Wilting, leaf drop
+
+ROSEMARY (Rosmarinus officinalis)
+- Optimal soil moisture: 40-50%
+- Water needs: Low
+- Critical periods: Establishment phase only
+- Frequency: Weekly or less when established
+- Amount per plant: 0.25 gallons per week
+- Special notes: Prefers dry conditions, excellent drainage essential
+- Drought tolerance: High
+- Signs of stress: Yellow leaves (usually from overwatering)
+
+THYME (Thymus vulgaris)
+- Optimal soil moisture: 40-50%
+- Water needs: Low
+- Critical periods: After transplanting
+- Frequency: Every 7-10 days
+- Amount per plant: 0.2 gallons per week
+- Special notes: Mediterranean herb - prefers dry conditions
+- Drought tolerance: High
+- Signs of stress: Root rot from overwatering
+
+MINT (Mentha spp.)
+- Optimal soil moisture: 70-80%
+- Water needs: High
+- Critical periods: All season
+- Frequency: Every 1-2 days in summer
+- Amount per plant: 1 gallon per week
+- Special notes: Can tolerate wet conditions
+- Drought tolerance: Low
+- Signs of stress: Stunted growth, leaf curl
+
+FRUITS
+------
+
+STRAWBERRIES (Fragaria × ananassa)
+- Optimal soil moisture: 70-80%
+- Water needs: High (1-2 inches/week)
+- Critical periods: Flowering through fruiting
+- Frequency: Every 2-3 days
+- Amount per plant: 0.5 gallons per week
+- Special notes: Drip irrigation prevents fruit rot
+- Drought tolerance: Low
+- Signs of stress: Small fruits, reduced runners
+
+BLUEBERRIES (Vaccinium spp.)
+- Optimal soil moisture: 70-80%
+- Water needs: High (1-2 inches/week)
+- Critical periods: Fruit development
+- Frequency: Every 2-3 days
+- Amount per plant: 2-5 gallons per week (mature bush)
+- Special notes: Requires acidic soil (pH 4.5-5.5)
+- Drought tolerance: Low
+- Signs of stress: Leaf scorch, premature fruit drop
+
+APPLE TREES (Malus domestica)
+- Optimal soil moisture: 60-70%
+- Water needs: Moderate-High
+- Critical periods: Fruit sizing (June-August)
+- Frequency: Weekly deep watering
+- Amount per tree: 10-20 gallons per week (mature tree)
+- Special notes: Deep watering encourages deep roots
+- Drought tolerance: Medium
+- Signs of stress: Small fruits, early leaf drop
+
+ORNAMENTALS
+-----------
+
+ROSES (Rosa spp.)
+- Optimal soil moisture: 60-70%
+- Water needs: High (1-2 inches/week)
+- Critical periods: Growing season
+- Frequency: Every 3-4 days
+- Amount per plant: 2-3 gallons per week
+- Special notes: Water at base to prevent black spot
+- Drought tolerance: Medium
+- Signs of stress: Reduced blooming, spider mites
+
+LAVENDER (Lavandula angustifolia)
+- Optimal soil moisture: 40-50%
+- Water needs: Low
+- Critical periods: Establishment only
+- Frequency: Every 1-2 weeks when established
+- Amount per plant: 0.5 gallons per week
+- Special notes: Mediterranean plant - avoid overwatering
+- Drought tolerance: Very High
+- Signs of stress: Root rot, gray foliage
+
+SUCCULENTS (Various genera)
+- Optimal soil moisture: 20-40%
+- Water needs: Very Low
+- Critical periods: Active growth (spring/fall)
+- Frequency: Every 2-4 weeks
+- Amount per plant: 0.1-0.2 gallons per watering
+- Special notes: Allow soil to dry completely between waterings
+- Drought tolerance: Very High
+- Signs of stress: Soft, mushy leaves (overwatering)
+
+SPECIAL CATEGORIES
+-----------------
+
+CONTAINER PLANTS
+- Multiply water needs by 1.5-2x
+- Check daily in summer
+- Ensure adequate drainage
+- Consider self-watering containers
+
+NEWLY PLANTED (First Year)
+- Water 2x more frequently than established plants
+- Deep water weekly to encourage root growth
+- Maintain consistent moisture
+- Reduce gradually in second year
+
+NATIVE PLANTS (After Establishment)
+- Usually require 50-75% less water
+- Match natural rainfall patterns
+- Group by water needs
+- Many are drought-dormant in summer
+
+WATER-WISE ALTERNATIVES
+----------------------
+High Water Plants → Low Water Alternatives
+- Lawn → Native groundcovers
+- Impatiens → Vinca or Portulaca  
+- Hydrangea → Ceanothus or Manzanita
+- Birch → Oak or Pine
+- Annual beds → Perennial gardens
