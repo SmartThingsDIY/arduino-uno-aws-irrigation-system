@@ -24,6 +24,8 @@
 #include <ArduinoJson.h>
 #include <time.h>
 #include <SPIFFS.h>
+#include <HTTPClient.h>
+#include <Update.h>
 
 // Model data (these would be loaded from SPIFFS in production)
 // For now, we'll use placeholder arrays
@@ -65,6 +67,9 @@ struct SystemStats {
                     successfulCloudSyncs(0), failedCloudSyncs(0),
                     averagePredictionTime(0), lastBatteryVoltage(3.3) {}
 } stats;
+
+// Forward declarations
+void performHTTPOTA(const String& url);
 
 void setup() {
     Serial.begin(115200);
@@ -524,11 +529,42 @@ void onMQTTMessage(String topic, String message) {
 
 void handleOTACommand(const String& message) {
     StaticJsonDocument<200> doc;
-    deserializeJson(doc, message);
+    DeserializationError error = deserializeJson(doc, message);
+    
+    if (error) {
+        Serial.print("OTA: Failed to parse JSON: ");
+        Serial.println(error.c_str());
+        return;
+    }
     
     if (doc["action"] == "update" && doc.containsKey("url")) {
-        Serial.println("OTA update requested");
-        // Implement OTA update logic here
+        String url = doc["url"];
+        Serial.println("OTA update requested from URL: " + url);
+        
+        // Validate URL
+        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+            Serial.println("OTA: Invalid URL format");
+            return;
+        }
+        
+        // Perform HTTP OTA update
+        performHTTPOTA(url);
+    } else if (doc["action"] == "status") {
+        // Report OTA status
+        StaticJsonDocument<100> statusDoc;
+        statusDoc["ota_enabled"] = true;
+        statusDoc["free_space"] = ESP.getFreeSketchSpace();
+        statusDoc["sketch_size"] = ESP.getSketchSize();
+        
+        String statusPayload;
+        serializeJson(statusDoc, statusPayload);
+        
+        String topic = "irrigation/" + String(wifiManager.getConfig().deviceId) + "/ota/status";
+        wifiManager.publishStatus(statusPayload);
+        
+        Serial.println("OTA: Status reported");
+    } else {
+        Serial.println("OTA: Unknown action or missing URL");
     }
 }
 
@@ -550,6 +586,110 @@ void handleConfigUpdateCommand(const String& message) {
         // Update configuration as needed
         Serial.println("Configuration update received");
     }
+}
+
+void performHTTPOTA(const String& url) {
+    HTTPClient http;
+    http.begin(url);
+    
+    Serial.println("OTA: Starting HTTP OTA update...");
+    
+    // Set timeout
+    http.setTimeout(30000);
+    
+    int httpCode = http.GET();
+    
+    if (httpCode != HTTP_CODE_OK) {
+        Serial.printf("OTA: HTTP GET failed, error: %s\n", http.errorToString(httpCode).c_str());
+        http.end();
+        return;
+    }
+    
+    int contentLength = http.getSize();
+    
+    if (contentLength <= 0) {
+        Serial.println("OTA: Invalid content length");
+        http.end();
+        return;
+    }
+    
+    Serial.printf("OTA: Content length: %d bytes\n", contentLength);
+    
+    // Check if there's enough space for the update
+    if (contentLength > ESP.getFreeSketchSpace()) {
+        Serial.println("OTA: Not enough space for update");
+        http.end();
+        return;
+    }
+    
+    // Begin OTA update
+    if (!Update.begin(contentLength)) {
+        Serial.printf("OTA: Update.begin failed, error: %s\n", Update.errorString());
+        http.end();
+        return;
+    }
+    
+    // Get the stream
+    WiFiClient* stream = http.getStreamPtr();
+    
+    Serial.println("OTA: Starting firmware download and flash...");
+    
+    size_t written = 0;
+    uint8_t buffer[1024];
+    
+    while (http.connected() && written < contentLength) {
+        size_t available = stream->available();
+        
+        if (available > 0) {
+            int bytesToRead = min(available, sizeof(buffer));
+            int bytesRead = stream->readBytes(buffer, bytesToRead);
+            
+            if (bytesRead > 0) {
+                if (Update.write(buffer, bytesRead) != bytesRead) {
+                    Serial.printf("OTA: Update.write failed, error: %s\n", Update.errorString());
+                    break;
+                }
+                written += bytesRead;
+                
+                // Print progress every 10KB
+                if (written % 10240 == 0 || written == contentLength) {
+                    Serial.printf("OTA: Progress: %d/%d bytes (%.1f%%)\n", 
+                                written, contentLength, (100.0 * written) / contentLength);
+                }
+            }
+        }
+        
+        delay(1);
+    }
+    
+    http.end();
+    
+    if (written == contentLength) {
+        if (Update.end(true)) {
+            Serial.println("OTA: Update successful! Rebooting...");
+            
+            // Notify cloud about successful update
+            StaticJsonDocument<100> notifyDoc;
+            notifyDoc["status"] = "update_successful";
+            notifyDoc["bytes_written"] = written;
+            
+            String notifyPayload;
+            serializeJson(notifyDoc, notifyPayload);
+            
+            String topic = "irrigation/" + String(wifiManager.getConfig().deviceId) + "/ota/result";
+            wifiManager.publishStatus(notifyPayload);
+            
+            delay(2000); // Give time for MQTT message to send
+            ESP.restart();
+        } else {
+            Serial.printf("OTA: Update.end failed, error: %s\n", Update.errorString());
+        }
+    } else {
+        Serial.printf("OTA: Download incomplete. Expected: %d, Got: %d\n", contentLength, written);
+    }
+    
+    // Clean up on failure
+    Update.abort();
 }
 
 // Placeholder model data (in production, these would be real trained models)
