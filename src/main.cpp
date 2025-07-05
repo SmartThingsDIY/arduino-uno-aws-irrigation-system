@@ -135,23 +135,10 @@ void setup()
     mlEngine.setGrowthStage(2, FLOWERING);
     mlEngine.setGrowthStage(3, MATURE);
 
-    Serial.println("Smart Irrigation System with Edge AI Started!");
-    Serial.println("Plant Configuration:");
-    Serial.println("  Sensor 0: Tomato (Vegetative)");
-    Serial.println("  Sensor 1: Lettuce (Vegetative)");
-    Serial.println("  Sensor 2: Basil (Flowering)");
-    Serial.println("  Sensor 3: Mint (Mature)");
-    Serial.println();
+    Serial.println("Smart Irrigation System Started!");
+    Serial.println("Plants: Tomato, Lettuce, Basil, Mint");
 
-    // Print system information
-    Serial.print("ML Engine Memory Usage: ");
-    Serial.print(sizeof(LocalMLEngine));
-    Serial.println(" bytes");
-
-    // Enable debug mode (uncomment to enable)
-    // #define DEBUG_ML 1
-
-    delay(2000); // Initial delay
+    delay(1000); // Initial delay
 }
 
 void loop()
@@ -550,15 +537,12 @@ void emergencyStopAllPumps()
     Serial.println("EMERGENCY STOP: All active pumps will be stopped");
 }
 
-void updateSensorHealth(int sensorIndex, float reading, bool isValid)
+void updateSensorHealth(int sensorIndex, uint16_t reading, bool isValid)
 {
-    unsigned long currentTime = millis();
-    
     if (isValid)
     {
-        // Valid reading - reset error count and update last valid reading
+        // Valid reading - reset error count
         moistureSensorHealth[sensorIndex].lastValidReading = reading;
-        moistureSensorHealth[sensorIndex].lastReadingTime = currentTime;
         moistureSensorHealth[sensorIndex].consecutiveErrors = 0;
         moistureSensorHealth[sensorIndex].isDisconnected = false;
     }
@@ -574,7 +558,7 @@ void updateSensorHealth(int sensorIndex, float reading, bool isValid)
             {
                 Serial.print("WARNING: Moisture sensor ");
                 Serial.print(sensorIndex + 1);
-                Serial.println(" marked as disconnected after consecutive errors");
+                Serial.println(" marked as disconnected");
                 moistureSensorHealth[sensorIndex].isDisconnected = true;
             }
         }
@@ -584,32 +568,4 @@ void updateSensorHealth(int sensorIndex, float reading, bool isValid)
 bool isSensorDisconnected(int sensorIndex)
 {
     return moistureSensorHealth[sensorIndex].isDisconnected;
-}
-
-void checkSensorTimeouts()
-{
-    unsigned long currentTime = millis();
-    
-    for (int i = 0; i < 4; i++)
-    {
-        // Check if sensor hasn't provided valid reading in too long
-        if (!moistureSensorHealth[i].isDisconnected && 
-            moistureSensorHealth[i].lastReadingTime > 0 &&
-            (currentTime - moistureSensorHealth[i].lastReadingTime) > SENSOR_TIMEOUT_MS)
-        {
-            Serial.print("TIMEOUT: Moisture sensor ");
-            Serial.print(i + 1);
-            Serial.println(" marked as disconnected due to timeout");
-            moistureSensorHealth[i].isDisconnected = true;
-        }
-    }
-    
-    // Check DHT22 sensor health
-    if (!tempHumidityHealth.isDisconnected &&
-        tempHumidityHealth.lastReadingTime > 0 &&
-        (currentTime - tempHumidityHealth.lastReadingTime) > SENSOR_TIMEOUT_MS)
-    {
-        Serial.println("TIMEOUT: DHT22 sensor marked as disconnected due to timeout");
-        tempHumidityHealth.isDisconnected = true;
-    }
 }
