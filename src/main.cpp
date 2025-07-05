@@ -168,9 +168,6 @@ void loop()
     // Update pump states (non-blocking pump control)
     updatePumpStates();
 
-    // Check for sensor timeouts
-    checkSensorTimeouts();
-
     // Periodic status report
     if (currentTime - lastSerialReport >= SERIAL_REPORT_INTERVAL)
     {
@@ -208,7 +205,7 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
     bool validLight = validateSensorReading(sensorIndex, lightLevel, MIN_LIGHT, MAX_LIGHT);
 
     // Update sensor health tracking
-    updateSensorHealth(sensorIndex, moisture, validMoisture);
+    updateSensorHealth(sensorIndex, (uint16_t)moisture, validMoisture);
 
     // Check if moisture sensor is disconnected
     if (isSensorDisconnected(sensorIndex))
@@ -418,56 +415,38 @@ void printStatusReport()
 float readTemperature()
 {
     float temperature = dht.readTemperature();
-    unsigned long currentTime = millis();
     
     // Validate sensor reading
     if (isnan(temperature) || temperature < MIN_TEMP || temperature > MAX_TEMP)
     {
-        Serial.println("ERROR: Invalid temperature reading from DHT22");
-        tempHumidityHealth.consecutiveErrors++;
-        
-        if (tempHumidityHealth.consecutiveErrors >= MAX_CONSECUTIVE_ERRORS)
+        if (dhtSensorOK)
         {
-            tempHumidityHealth.isDisconnected = true;
+            Serial.println("ERROR: Invalid temperature reading from DHT22");
+            dhtSensorOK = false;
         }
-        
         return 22.5; // Fallback to safe default
     }
     
-    // Valid reading - update health status
-    tempHumidityHealth.lastValidReading = temperature;
-    tempHumidityHealth.lastReadingTime = currentTime;
-    tempHumidityHealth.consecutiveErrors = 0;
-    tempHumidityHealth.isDisconnected = false;
-    
+    dhtSensorOK = true;
     return temperature;
 }
 
 float readHumidity()
 {
     float humidity = dht.readHumidity();
-    unsigned long currentTime = millis();
     
     // Validate sensor reading
     if (isnan(humidity) || humidity < MIN_HUMIDITY || humidity > MAX_HUMIDITY)
     {
-        Serial.println("ERROR: Invalid humidity reading from DHT22");
-        tempHumidityHealth.consecutiveErrors++;
-        
-        if (tempHumidityHealth.consecutiveErrors >= MAX_CONSECUTIVE_ERRORS)
+        if (dhtSensorOK)
         {
-            tempHumidityHealth.isDisconnected = true;
+            Serial.println("ERROR: Invalid humidity reading from DHT22");
+            dhtSensorOK = false;
         }
-        
         return 60.0; // Fallback to safe default
     }
     
-    // Valid reading - update health status  
-    tempHumidityHealth.lastValidReading = humidity;
-    tempHumidityHealth.lastReadingTime = currentTime;
-    tempHumidityHealth.consecutiveErrors = 0;
-    tempHumidityHealth.isDisconnected = false;
-    
+    dhtSensorOK = true;
     return humidity;
 }
 
