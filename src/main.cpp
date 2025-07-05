@@ -55,7 +55,7 @@ const unsigned long SERIAL_REPORT_INTERVAL = 10000; // 10 seconds
 const unsigned long ESP32_SEND_INTERVAL = 5000;     // 5 seconds
 
 // JSON buffer size optimized for Arduino Uno RAM constraints
-const size_t JSON_BUFFER_SIZE = 150;
+const size_t JSON_BUFFER_SIZE = 100;
 
 // Global variables
 LocalMLEngine mlEngine;
@@ -378,25 +378,17 @@ void sendDataToESP32(int sensorIndex, const SensorData &sensorData,
         doc["a"] = (int)waterAmount; // Only include if watering
     }
     
-    // Check if serialization will fit in buffer
-    size_t jsonSize = measureJson(doc);
-    if (jsonSize >= JSON_BUFFER_SIZE - 10) { // 10 byte safety margin
-        Serial.print("ERROR: JSON too large: ");
-        Serial.print(jsonSize);
-        Serial.println(" bytes");
-        return;
-    }
+    // Skip size check to save RAM - JSON is small with compact format
     
     // Send to ESP32 via dedicated serial port
     serializeJson(doc, esp32Serial);
     esp32Serial.println();
     
-    // Debug log (only for critical transmissions)
-    if (action.shouldWater || (sensorIndex == 0 && (currentTime % 30000 < 100))) {
-        Serial.print("ESP32: Sent ");
-        Serial.print(jsonSize);
-        Serial.print(" bytes, sensor ");
-        Serial.println(sensorIndex + 1);
+    // Minimal debug log to save RAM
+    if (action.shouldWater) {
+        Serial.print("ESP32: S");
+        Serial.print(sensorIndex + 1);
+        Serial.println(" watered");
     }
 }
 

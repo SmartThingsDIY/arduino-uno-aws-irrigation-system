@@ -260,31 +260,29 @@ void parseArduinoData(const String& jsonString) {
         return;
     }
     
-    // Validate required fields
-    if (!doc.containsKey("sensor") || !doc.containsKey("moisture")) {
+    // Validate required fields (compact format)
+    if (!doc.containsKey("s") || !doc.containsKey("m")) {
         Serial.println("ERROR: Missing required JSON fields");
         return;
     }
     
-    // Extract and validate sensor data with bounds checking
+    // Extract and validate sensor data with bounds checking (compact format)
     SensorData data;
-    data.moisture = constrain((float)(doc["moisture"] | 0.0), 0.0, 1023.0);
-    data.temperature = constrain((float)(doc["temperature"] | 25.0), -40.0, 85.0);
-    data.humidity = constrain((float)(doc["humidity"] | 50.0), 0.0, 100.0);
-    data.lightLevel = constrain((float)(doc["light"] | 500.0), 0.0, 1023.0);
+    data.moisture = constrain((float)(doc["m"] | 0), 0.0, 1023.0);
+    data.temperature = constrain((float)(doc["t"] | 25), -40.0, 85.0);
+    data.humidity = constrain((float)(doc["h"] | 50), 0.0, 100.0);
+    data.lightLevel = constrain((float)(doc["l"] | 500), 0.0, 1023.0);
     data.timestamp = millis();
     
-    // Additional fields with validation
-    int sensorIndex = constrain((int)(doc["sensor"] | 1), 1, 4) - 1; // Convert to 0-based
-    bool watered = doc["watered"] | false;
-    float waterAmount = constrain((float)(doc["waterAmount"] | 0.0), 0.0, 1000.0);
-    unsigned long inferenceTime = constrain((unsigned long)(doc["inferenceTime"] | 0), 0UL, 999999UL);
+    // Additional fields with validation (compact format)
+    int sensorIndex = constrain((int)(doc["s"] | 1), 1, 4) - 1; // Convert to 0-based
+    bool watered = (doc["w"] | 0) > 0;
+    float waterAmount = constrain((float)(doc["a"] | 0), 0.0, 1000.0);
     
     // Store Arduino metadata
     data.sensorIndex = sensorIndex;
     data.watered = watered;
     data.waterAmount = waterAmount;
-    data.arduinoInferenceTime = inferenceTime;
     
     // Add temporal features
     struct tm timeinfo;

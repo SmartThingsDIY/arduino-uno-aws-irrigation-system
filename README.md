@@ -62,12 +62,14 @@ AI/ML Stack
 | Relay Channel 2 | Digital Pin 3 | Controls Pump 2 |
 | Relay Channel 3 | Digital Pin 4 | Controls Pump 3 |
 | Relay Channel 4 | Digital Pin 5 | Controls Pump 4 |
+| ESP32 Communication TX | Digital Pin 7 | To ESP32 RX (GPIO 16) |
+| ESP32 Communication RX | Digital Pin 8 | From ESP32 TX (GPIO 17) |
 
 #### ESP32 Connections (Optional Edge AI Gateway)
 | Component | ESP32 Pin | Notes |
 |-----------|-----------|-------|
-| Arduino TX | GPIO 16 (RX2) | Serial communication |
-| Arduino RX | GPIO 17 (TX2) | Serial communication |
+| Arduino TX | GPIO 16 (RX1) | Receives data from Arduino |
+| Arduino RX | GPIO 17 (TX1) | Sends data to Arduino |
 | Status LED | GPIO 2 | System status indicator |
 | Reset Button | GPIO 0 | Manual reset |
 
@@ -92,6 +94,19 @@ AI/ML Stack
 - **Relay protection**: Active-LOW configuration prevents accidental activation
 - **Startup sequence**: All pumps OFF by default during initialization
 - **Memory optimization**: Efficient data structures for 2KB RAM constraint
+
+#### 📡 Communication Protocol (Arduino ↔ ESP32)
+- **Hardware**: SoftwareSerial on pins 7-8 (Arduino) ↔ Hardware Serial1 pins 16-17 (ESP32)
+- **Baud rate**: 9600 bps
+- **Format**: Compact JSON to optimize Arduino's 2KB RAM limit
+- **Rate limiting**: Arduino sends maximum 1 message per 5 seconds
+- **Error handling**: Bounds checking, timeout protection, graceful fallback
+
+**JSON Format Example:**
+```json
+{"s":1,"m":450,"t":24,"h":65,"l":580,"w":1,"a":100}
+```
+Where: s=sensor, m=moisture, t=temp, h=humidity, l=light, w=watered, a=amount
 
 ### Required Libraries
 ```bash
