@@ -44,7 +44,7 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
 }
 ```
 
-### 2. ESP8266 Level
+### 2. ESP32 Level
 
 **Constraint**: 4MB Flash, 80KB RAM, 80MHz
 
@@ -85,7 +85,7 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
    - Sensor fault identification
    - Automatic failsafe triggers
 
-### Phase 2: TensorFlow Lite on ESP8266 (Weeks 3-4)
+### Phase 2: TensorFlow Lite on ESP32 (Weeks 3-4)
 
 1. **Model Quantization**
    - Convert Float32 to INT8
@@ -128,7 +128,7 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
 
    ```
    Arduino: Immediate response (<100ms)
-   ESP8266: Short-term planning (<1s)
+   ESP32: Short-term planning (<1s)
    Pi Zero: Long-term optimization (<5s)
    Cloud: Advanced analytics (when available)
    ```
@@ -136,7 +136,7 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
 2. **Graceful Degradation**
    - Full functionality with cloud
    - 90% functionality with Pi Zero
-   - 70% functionality with ESP8266 only
+   - 70% functionality with ESP32 only
    - 50% functionality with Arduino only
 
 3. **Energy Optimization**
@@ -146,17 +146,17 @@ if (moisture < 300 && temp > 25 && humidity < 40) {
 
 ## Hardware Requirements
 
-### Minimum (Current + ESP8266 upgrade)
+### Minimum (Current + ESP32 upgrade)
 
 - Arduino Uno (existing)
-- ESP8266 with 4MB flash
+- ESP32 with 4MB flash
 - MicroSD card module (for data logging)
 - Total cost: ~$10 addition
 
 ### Recommended (Full Edge AI)
 
 - Arduino Uno (existing)
-- ESP32 (upgrade from ESP8266)
+- ESP32 (upgrade from ESP32)
 - Raspberry Pi Zero 2 W
 - 16GB MicroSD card
 - USB camera module
@@ -221,7 +221,7 @@ class LocalMLEngine {
 };
 ```
 
-### 2. ESP8266/32 Edge Runtime
+### 2. ESP32/32 Edge Runtime
 
 ```cpp
 class EdgeInference {
@@ -260,7 +260,7 @@ class LocalIrrigationAI:
 ### Month 1
 
 - Week 1-2: Arduino embedded ML implementation
-- Week 3-4: ESP8266 TensorFlow Lite integration
+- Week 3-4: ESP32 TensorFlow Lite integration
 
 ### Month 2
 
