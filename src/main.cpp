@@ -1,6 +1,6 @@
 /**
   This is an extremely popular DIY project that allows you to automatically water your plants according to the level of moisture in the soil
-  @author MecaHumArduino
+  @author iLyas
   @version 3.0
 */
 
@@ -74,22 +74,26 @@ String sendDataToWiFiBoard(String command, const int timeout, boolean debug)
 
   long int time = millis();
 
-  while((time+timeout) > millis()) {
-    while(wifi.available()) {
+  while ((time + timeout) > millis())
+  {
+    while (wifi.available())
+    {
       // The esp has data so display its output to the serial window
       char c = wifi.read(); // read the next character.
-      response+=c;
+      response += c;
     }
   }
 
-  if (debug) {
+  if (debug)
+  {
     Serial.print(response);
   }
 
   return response;
 }
 
-void setup() {
+void setup()
+{
   Serial.begin(9600);
 
   pinMode(IN1, OUTPUT);
@@ -110,16 +114,21 @@ void setup() {
   delay(500);
 }
 
-void loop() {
+void loop()
+{
 
-  if (DEBUG == true) {
+  if (DEBUG == true)
+  {
     Serial.print("buffer: ");
-    if (wifi.available()) {
+    if (wifi.available())
+    {
       String espBuf;
       long int time = millis();
 
-      while((time+1000) > millis()) {
-        while (wifi.available()) {
+      while ((time + 1000) > millis())
+      {
+        while (wifi.available())
+        {
           // The esp has data so display its output to the serial window
           char c = wifi.read(); // read the next character.
           espBuf += c;
@@ -134,9 +143,12 @@ void loop() {
   sensor1Value = analogRead(Pin1);
   Serial.println(sensor1Value);
 
-  if (sensor1Value > 450) {
+  if (sensor1Value > 450)
+  {
     digitalWrite(IN1, LOW);
-  } else {
+  }
+  else
+  {
     digitalWrite(IN1, HIGH);
   }
 
@@ -144,9 +156,12 @@ void loop() {
   sensor2Value = analogRead(Pin2);
   Serial.println(sensor2Value);
 
-  if (sensor2Value > 450) {
+  if (sensor2Value > 450)
+  {
     digitalWrite(IN2, LOW);
-  } else {
+  }
+  else
+  {
     digitalWrite(IN2, HIGH);
   }
 
@@ -154,9 +169,12 @@ void loop() {
   sensor3Value = analogRead(Pin3);
   Serial.println(sensor3Value);
 
-  if (sensor3Value > 450) {
+  if (sensor3Value > 450)
+  {
     digitalWrite(IN3, LOW);
-  } else {
+  }
+  else
+  {
     digitalWrite(IN3, HIGH);
   }
 
@@ -164,14 +182,18 @@ void loop() {
   sensor4Value = analogRead(Pin4);
   Serial.println(sensor4Value);
 
-  if (sensor4Value > 450) {
+  if (sensor4Value > 450)
+  {
     digitalWrite(IN4, LOW);
-  } else {
+  }
+  else
+  {
     digitalWrite(IN4, HIGH);
   }
 
   String preparedData = prepareDataForWiFi(sensor1Value, sensor2Value, sensor3Value, sensor4Value);
-  if (DEBUG == true) {
+  if (DEBUG == true)
+  {
     Serial.println(preparedData);
   }
   sendDataToWiFiBoard(preparedData, 1000, DEBUG);

@@ -7,7 +7,7 @@ This repo accompanies the "Connected Irrigation System" YouTube series. it conta
 ⚡️ COMPONENTS AND SUPPLIES
 ==========================
 
-<img align="right" src="https://github.com/MecaHumArduino/arduino-uno-aws-irrigation-system/blob/master/docs/moisture.png?raw=true" style="max-width:100%;" height="350">
+<img align="right" src="https://github.com/iLyas/arduino-uno-aws-irrigation-system/blob/master/docs/moisture.png?raw=true" style="max-width:100%;" height="350">
 
 * [Arduino Uno](https://amzn.to/2EqybyM)
 * [Breadboard](https://amzn.to/2Ei40tP)
@@ -65,7 +65,7 @@ BUY VS BUILD
 
 You can always go ahead and buy a ready to use a solution like this [Self Watering System](https://amzn.to/3laBGds) for roughly the same cost. But if you're looking to learn Arduino development while doing a fun and useful project in the meantime, then stick around
 
-<img align="right" src="https://github.com/MecaHumArduino/arduino-uno-aws-irrigation-system/blob/master/docs/moisture_sensor.png?raw=true" style="max-width:100%;" height="350">
+<img align="right" src="https://github.com/iLyas/arduino-uno-aws-irrigation-system/blob/master/docs/moisture_sensor.png?raw=true" style="max-width:100%;" height="350">
 
 What is moisture?
 =================
@@ -82,7 +82,7 @@ THE WIRING
 
 There are a number of connections to be made. Lining up the display with the top of the breadboard helps to identify its pins without too much counting, especially if the breadboard has its rows numbered with row 1 as the top row of the board. Do not forget, the long yellow lead that links the slider of the pot to pin 3 of the display. The potentiometer is used to control the contrast of the display.
 
-<img align="center" src="https://github.com/MecaHumArduino/arduino-uno-aws-irrigation-system/blob/master/docs/wiring_diagram.png?raw=true" style="max-width:100%;" height="500">
+<img align="center" src="https://github.com/iLyas/arduino-uno-aws-irrigation-system/blob/master/docs/wiring_diagram.png?raw=true" style="max-width:100%;" height="500">
 
 THE CODE
 ========
@@ -164,4 +164,4 @@ There are total four lines of `if(value4>550)` in the `loop()` function. This is
 Next Step
 ---------
 
-For code that goes into the WiFi board (ESP8266 ESP01) and more explanation, please head out to this repo: <https://github.com/MecaHumArduino/esp8266-01-aws-mqtt>
+For code that goes into the WiFi board (ESP8266 ESP01) and more explanation, please head out to this repo: <https://github.com/iLyas/esp8266-01-aws-mqtt>
