@@ -12,12 +12,24 @@ This is a smart irrigation system that combines Arduino hardware control with AW
 
 ## Key Commands
 
-### Arduino Development
+### Arduino Development (Phase 1: Embedded ML)
 
-- **Build**: `platformio run`
-- **Upload to Arduino**: `platformio run --target upload`
-- **Serial Monitor**: `platformio device monitor` (9600 baud)
-- **Clean**: `platformio run --target clean`
+- **Build**: `platformio run -e uno`
+- **Upload to Arduino**: `platformio run -e uno --target upload`
+- **Serial Monitor**: `platformio device monitor -e uno` (9600 baud)
+- **Clean**: `platformio run -e uno --target clean`
+
+### ESP32 Development (Phase 2 & 3: Edge AI Gateway)
+
+- **Build**: `platformio run -e esp32`
+- **Upload to ESP32**: `platformio run -e esp32 --target upload`
+- **Serial Monitor**: `platformio device monitor -e esp32` (115200 baud)
+- **Clean**: `platformio run -e esp32 --target clean`
+
+### Multi-Target Development
+
+- **Build Both**: `platformio run` (builds Arduino + ESP32)
+- **Test All**: `platformio test`
 
 ### Python Development
 
@@ -32,21 +44,21 @@ This is a smart irrigation system that combines Arduino hardware control with AW
 ### Hardware Layer
 
 - **Arduino Uno** with 4 moisture sensors (A0-A3) and 4-channel relay module (pins 2-5)
-- **ESP8266** communicates via SoftwareSerial (pins 2,3) to send data to cloud
+- **ESP32** communicates via HardwareSerial (pins 16,17) for edge AI and cloud connectivity
 - Automatic watering triggered when moisture < 450 (dry threshold)
 
 ### Data Flow
 
 1. Arduino reads sensors every 2 seconds
 2. Controls pumps based on moisture thresholds
-3. Sends JSON telemetry to ESP8266: `{"sensor1Value": "45.2", "pump1Status": "ON", ...}`
-4. ESP8266 forwards to AWS IoT Core (separate repository)
-5. Cloud services provide AI predictions, weather integration, and plant health analysis
+3. Sends JSON telemetry to ESP32: `{"sensor": 1, "moisture": 345, "temperature": 22.5, ...}`
+4. ESP32 runs edge AI models for local predictions and anomaly detection
+5. ESP32 communicates with AWS IoT Core via WiFi for cloud analytics
 
 ### Key Implementation Details
 
 - **Moisture threshold**: Values > 450 indicate dry soil requiring watering
-- **Serial communication**: 9600 baud between Arduino and ESP8266
+- **Serial communication**: 9600 baud between Arduino and ESP32 (115200 for ESP32 debug)
 - **JSON format**: ArduinoJson library for data serialization
 - **Python version**: 3.12+ required
 
@@ -75,5 +87,5 @@ This is a smart irrigation system that combines Arduino hardware control with AW
 
 - Always test Arduino code with serial monitor before deploying
 - Ensure moisture sensor calibration matches your soil type
-- ESP8266 firmware is maintained in a separate repository
+- ESP32 firmware with edge AI is included in `edge-ai/esp32-ml/`
 - Python code follows black formatting and flake8 linting standards
