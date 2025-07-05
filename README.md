@@ -136,6 +136,7 @@ pio lib install "adafruit/DHT sensor library@^1.4.4"
 
 * [ArduinoJson](https://github.com/bblanchon/ArduinoJson)
 * [SoftwareSerial](https://www.arduino.cc/en/Reference.SoftwareSerial)
+* [DHT sensor library](https://github.com/adafruit/DHT-sensor-library) - For DHT22 temperature/humidity sensor
 
 Cloud Infrastructure
 =====
