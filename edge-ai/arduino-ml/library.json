@@ -1,0 +1,26 @@
+{
+  "name": "LocalMLEngine",
+  "version": "1.0.0",
+  "description": "Local Machine Learning Engine for Arduino-based smart irrigation with embedded decision trees, plant-specific lookup tables, and anomaly detection",
+  "keywords": ["arduino", "machine learning", "irrigation", "embedded", "iot", "edge ai"],
+  "authors": [
+    {
+      "name": "iLyas Bakouch",
+      "url": "https://github.com/SmartThingsDIY"
+    }
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/SmartThingsDIY/arduino-uno-aws-irrigation-system",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SmartThingsDIY/arduino-uno-aws-irrigation-system"
+  },
+  "frameworks": ["arduino"],
+  "platforms": ["atmelavr", "atmelsam", "espressif32"],
+  "dependencies": [
+    {
+      "name": "ArduinoJson",
+      "version": "^6.21.2"
+    }
+  ]
+}
