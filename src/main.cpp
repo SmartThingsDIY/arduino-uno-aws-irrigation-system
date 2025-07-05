@@ -45,6 +45,17 @@ unsigned long totalDecisions = 0;
 unsigned long totalWateringActions = 0;
 unsigned long totalAnomalies = 0;
 
+// Function declarations
+void processAllSensors();
+void processSensor(int sensorIndex, float temperature, float humidity, float lightLevel);
+void executeWateringAction(int sensorIndex, const Action &action);
+void logWateringAction(int sensorIndex, const Action &action, unsigned long inferenceTime);
+void handleAnomaly(int sensorIndex, const SensorData &sensorData);
+void sendDataToESP32(int sensorIndex, const SensorData &sensorData, const Action &action, unsigned long inferenceTime);
+void printStatusReport();
+float readTemperature();
+float readHumidity();
+
 void setup()
 {
     Serial.begin(9600);
