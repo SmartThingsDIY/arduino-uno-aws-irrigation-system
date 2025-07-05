@@ -60,7 +60,6 @@ const size_t JSON_BUFFER_SIZE = 300;
 // Global variables
 LocalMLEngine mlEngine;
 SoftwareSerial esp32Serial(ESP32_TX_PIN, ESP32_RX_PIN); // RX, TX
-DHT dht(TEMP_HUMIDITY_PIN, DHT22);
 unsigned long lastSensorRead = 0;
 unsigned long lastSerialReport = 0;
 unsigned long lastESP32Send = 0;
@@ -345,22 +344,60 @@ void handleAnomaly(int sensorIndex, const SensorData &sensorData)
 void sendDataToESP32(int sensorIndex, const SensorData &sensorData,
                      const Action &action, unsigned long inferenceTime)
 {
-    // Create JSON message for ESP32
-    StaticJsonDocument<200> doc;
-
+    // Rate limiting - only send every ESP32_SEND_INTERVAL
+    unsigned long currentTime = millis();
+    if (currentTime - lastESP32Send < ESP32_SEND_INTERVAL) {
+        return;
+    }
+    lastESP32Send = currentTime;
+    
+    // Create JSON message for ESP32 with bounds checking
+    DynamicJsonDocument doc(JSON_BUFFER_SIZE);
+    
+    // Input validation and bounds checking
+    if (sensorIndex < 0 || sensorIndex >= 4) {
+        Serial.println("ERROR: Invalid sensor index for ESP32 transmission");
+        return;
+    }
+    
+    // Sanitize sensor values to prevent overflow
+    float moisture = constrain(sensorData.moisture, 0, 1023);
+    float temperature = constrain(sensorData.temperature, -40, 85);
+    float humidity = constrain(sensorData.humidity, 0, 100);
+    float light = constrain(sensorData.lightLevel, 0, 1023);
+    float waterAmount = constrain(action.waterAmount, 0, 1000);
+    
     doc["sensor"] = sensorIndex + 1;
-    doc["moisture"] = sensorData.moisture;
-    doc["temperature"] = sensorData.temperature;
-    doc["humidity"] = sensorData.humidity;
-    doc["light"] = sensorData.lightLevel;
+    doc["moisture"] = moisture;
+    doc["temperature"] = temperature;
+    doc["humidity"] = humidity;
+    doc["light"] = light;
     doc["watered"] = action.shouldWater;
-    doc["waterAmount"] = action.waterAmount;
-    doc["inferenceTime"] = inferenceTime;
-    doc["timestamp"] = millis();
-
-    // Send to ESP32 via Serial (modify based on your communication setup)
-    serializeJson(doc, Serial);
-    Serial.println();
+    doc["waterAmount"] = waterAmount;
+    doc["inferenceTime"] = min(inferenceTime, 999999UL); // Prevent overflow
+    doc["timestamp"] = currentTime;
+    doc["uptime"] = currentTime / 1000;
+    
+    // Check if serialization will fit in buffer
+    size_t jsonSize = measureJson(doc);
+    if (jsonSize >= JSON_BUFFER_SIZE - 10) { // 10 byte safety margin
+        Serial.print("ERROR: JSON too large: ");
+        Serial.print(jsonSize);
+        Serial.println(" bytes");
+        return;
+    }
+    
+    // Send to ESP32 via dedicated serial port
+    serializeJson(doc, esp32Serial);
+    esp32Serial.println();
+    
+    // Debug log (only for critical transmissions)
+    if (action.shouldWater || (sensorIndex == 0 && (currentTime % 30000 < 100))) {
+        Serial.print("ESP32: Sent ");
+        Serial.print(jsonSize);
+        Serial.print(" bytes, sensor ");
+        Serial.println(sensorIndex + 1);
+    }
 }
 
 void printStatusReport()

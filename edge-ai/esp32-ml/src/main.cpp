@@ -222,30 +222,69 @@ bool loadModelFromFile(ModelType type, const char* filename) {
 void processArduinoData() {
     if (arduinoSerial.available()) {
         String jsonString = arduinoSerial.readStringUntil('\n');
+        jsonString.trim(); // Remove whitespace
         
-        if (jsonString.length() > 0) {
-            parseArduinoData(jsonString);
+        // Input validation
+        if (jsonString.length() == 0) {
+            return; // Empty string
         }
+        
+        if (jsonString.length() > 500) { // Prevent memory overflow
+            Serial.print("WARNING: Arduino JSON too large: ");
+            Serial.print(jsonString.length());
+            Serial.println(" bytes, discarding");
+            return;
+        }
+        
+        // Rate limiting to prevent data flooding
+        static unsigned long lastProcessTime = 0;
+        unsigned long currentTime = millis();
+        if (currentTime - lastProcessTime < 1000) { // Max 1 msg/second
+            return;
+        }
+        lastProcessTime = currentTime;
+        
+        parseArduinoData(jsonString);
     }
 }
 
 void parseArduinoData(const String& jsonString) {
-    StaticJsonDocument<300> doc;
+    DynamicJsonDocument doc(400); // Increased size for new fields
     DeserializationError error = deserializeJson(doc, jsonString);
     
     if (error) {
         Serial.print("JSON parsing failed: ");
         Serial.println(error.c_str());
+        Serial.print("Input: ");
+        Serial.println(jsonString.substring(0, 100)); // First 100 chars for debug
         return;
     }
     
-    // Extract sensor data
+    // Validate required fields
+    if (!doc.containsKey("sensor") || !doc.containsKey("moisture")) {
+        Serial.println("ERROR: Missing required JSON fields");
+        return;
+    }
+    
+    // Extract and validate sensor data with bounds checking
     SensorData data;
-    data.moisture = doc["moisture"] | 0.0;
-    data.temperature = doc["temperature"] | 25.0;
-    data.humidity = doc["humidity"] | 50.0;
-    data.lightLevel = doc["light"] | 500.0;
+    data.moisture = constrain((float)(doc["moisture"] | 0.0), 0.0, 1023.0);
+    data.temperature = constrain((float)(doc["temperature"] | 25.0), -40.0, 85.0);
+    data.humidity = constrain((float)(doc["humidity"] | 50.0), 0.0, 100.0);
+    data.lightLevel = constrain((float)(doc["light"] | 500.0), 0.0, 1023.0);
     data.timestamp = millis();
+    
+    // Additional fields with validation
+    int sensorIndex = constrain((int)(doc["sensor"] | 1), 1, 4) - 1; // Convert to 0-based
+    bool watered = doc["watered"] | false;
+    float waterAmount = constrain((float)(doc["waterAmount"] | 0.0), 0.0, 1000.0);
+    unsigned long inferenceTime = constrain((unsigned long)(doc["inferenceTime"] | 0), 0UL, 999999UL);
+    
+    // Store Arduino metadata
+    data.sensorIndex = sensorIndex;
+    data.watered = watered;
+    data.waterAmount = waterAmount;
+    data.arduinoInferenceTime = inferenceTime;
     
     // Add temporal features
     struct tm timeinfo;
