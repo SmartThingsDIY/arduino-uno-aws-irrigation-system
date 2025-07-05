@@ -24,6 +24,7 @@
 
 #include "LocalMLEngine.h"
 #include <ArduinoJson.h>
+#include <SoftwareSerial.h>
 #include <DHT.h>
 
 // Pin definitions
@@ -31,6 +32,8 @@ const int MOISTURE_PINS[4] = {A0, A1, A2, A3};
 const int RELAY_PINS[4] = {2, 3, 4, 5};
 const int TEMP_HUMIDITY_PIN = 6; // DHT22 sensor
 const int LIGHT_PIN = A4;        // LDR sensor
+const int ESP32_RX_PIN = 7;      // Arduino TX -> ESP32 RX
+const int ESP32_TX_PIN = 8;      // Arduino RX <- ESP32 TX
 
 // DHT22 sensor configuration
 #define DHT_TYPE DHT22
@@ -49,11 +52,18 @@ const int MAX_LIGHT = 1023;
 // Timing constants
 const unsigned long SENSOR_READ_INTERVAL = 2000;    // 2 seconds
 const unsigned long SERIAL_REPORT_INTERVAL = 10000; // 10 seconds
+const unsigned long ESP32_SEND_INTERVAL = 5000;     // 5 seconds
+
+// JSON buffer size with safety margin
+const size_t JSON_BUFFER_SIZE = 300;
 
 // Global variables
 LocalMLEngine mlEngine;
+SoftwareSerial esp32Serial(ESP32_TX_PIN, ESP32_RX_PIN); // RX, TX
+DHT dht(TEMP_HUMIDITY_PIN, DHT22);
 unsigned long lastSensorRead = 0;
 unsigned long lastSerialReport = 0;
+unsigned long lastESP32Send = 0;
 
 // Non-blocking pump control
 struct PumpState {
@@ -100,6 +110,8 @@ bool isSensorDisconnected(int sensorIndex);
 void setup()
 {
     Serial.begin(9600);
+    esp32Serial.begin(9600);
+    dht.begin();
 
     // Initialize pins
     for (int i = 0; i < 4; i++)
