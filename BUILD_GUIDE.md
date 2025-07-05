@@ -7,7 +7,8 @@ This project supports both Arduino Uno (embedded ML) and ESP32 (edge AI gateway)
 ```
 ├── platformio.ini                    # Root config - builds both targets
 ├── edge-ai/esp32-ml/platformio.ini   # ESP32-specific config (standalone)
-├── src/main.cpp                      # Arduino Uno firmware
+├── src/main.cpp                      # Arduino Uno Edge AI firmware ✨ UPDATED
+├── src/main_legacy.cpp               # Original ESP8266 version (preserved)
 ├── edge-ai/arduino-ml/               # Arduino ML library
 └── edge-ai/esp32-ml/                 # ESP32 edge AI implementation
 ```

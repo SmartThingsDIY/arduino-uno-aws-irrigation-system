@@ -4,7 +4,7 @@
  * It supports adding nodes, traversing the tree, and making predictions based on feature scores.
  *
  * Author: iLyas Bakouch
- * GitHub: https://github.com/isbkch
+ * GitHub: https://github.com/SmartThingsDIY
  * Version: 0.78.3
  * Date: 2025
  */

@@ -4,7 +4,7 @@
  * It uses statistical methods to analyze sensor readings and identify potential anomalies.
  *
  * Author: iLyas Bakouch
- * GitHub: https://github.com/isbkch
+ * GitHub: https://github.com/SmartThingsDIY
  * Version: 0.78.3
  * Date: 2025
  */

@@ -4,7 +4,7 @@
  * It provides methods to retrieve plant data, apply growth stage modifiers, and manage custom thresholds.
  *
  * Author: iLyas Bakouch
- * GitHub: https://github.com/isbkch
+ * GitHub: https://github.com/SmartThingsDIY
  * Version: 0.78.3
  * Date: 2025
  */
