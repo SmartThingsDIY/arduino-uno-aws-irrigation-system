@@ -64,6 +64,18 @@ struct PumpState {
 };
 PumpState pumpStates[4] = {{false, 0, 0, false}};
 
+// Sensor health monitoring (optimized for memory)
+struct SensorHealth {
+    uint16_t lastValidReading;    // Use uint16_t for moisture (0-1023)
+    uint8_t consecutiveErrors;    // 8-bit is enough
+    bool isDisconnected;
+};
+SensorHealth moistureSensorHealth[4] = {{0, 0, false}};
+bool dhtSensorOK = true;
+
+// Sensor health constants
+const uint8_t MAX_CONSECUTIVE_ERRORS = 3;
+
 // Statistics
 unsigned long totalDecisions = 0;
 unsigned long totalWateringActions = 0;
@@ -82,6 +94,8 @@ float readHumidity();
 void updatePumpStates();
 bool validateSensorReading(int sensorIndex, float value, float minVal, float maxVal);
 void emergencyStopAllPumps();
+void updateSensorHealth(int sensorIndex, uint16_t reading, bool isValid);
+bool isSensorDisconnected(int sensorIndex);
 
 void setup()
 {
@@ -154,6 +168,9 @@ void loop()
     // Update pump states (non-blocking pump control)
     updatePumpStates();
 
+    // Check for sensor timeouts
+    checkSensorTimeouts();
+
     // Periodic status report
     if (currentTime - lastSerialReport >= SERIAL_REPORT_INTERVAL)
     {
@@ -183,6 +200,50 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
 {
     // Read moisture sensor
     float moisture = analogRead(MOISTURE_PINS[sensorIndex]);
+
+    // Validate all sensor readings
+    bool validMoisture = validateSensorReading(sensorIndex, moisture, MIN_MOISTURE, MAX_MOISTURE);
+    bool validTemperature = validateSensorReading(sensorIndex, temperature, MIN_TEMP, MAX_TEMP);
+    bool validHumidity = validateSensorReading(sensorIndex, humidity, MIN_HUMIDITY, MAX_HUMIDITY);
+    bool validLight = validateSensorReading(sensorIndex, lightLevel, MIN_LIGHT, MAX_LIGHT);
+
+    // Update sensor health tracking
+    updateSensorHealth(sensorIndex, moisture, validMoisture);
+
+    // Check if moisture sensor is disconnected
+    if (isSensorDisconnected(sensorIndex))
+    {
+        Serial.print("CRITICAL: Moisture sensor ");
+        Serial.print(sensorIndex + 1);
+        Serial.println(" appears to be disconnected - skipping processing");
+        return;
+    }
+
+    // If critical sensors are invalid, skip processing
+    if (!validMoisture)
+    {
+        Serial.print("CRITICAL: Skipping sensor ");
+        Serial.print(sensorIndex + 1);
+        Serial.println(" processing due to invalid moisture reading");
+        return;
+    }
+
+    // Use fallback values for non-critical sensors if needed
+    if (!validTemperature)
+    {
+        temperature = 22.5; // Fallback temperature
+        Serial.println("Using fallback temperature value");
+    }
+    if (!validHumidity)
+    {
+        humidity = 60.0; // Fallback humidity
+        Serial.println("Using fallback humidity value");
+    }
+    if (!validLight)
+    {
+        lightLevel = 500; // Fallback light level
+        Serial.println("Using fallback light level value");
+    }
 
     // Create sensor data structure
     SensorData sensorData;
@@ -221,14 +282,29 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
 
 void executeWateringAction(int sensorIndex, const Action &action)
 {
+    // Check if pump is already active
+    if (pumpStates[sensorIndex].isActive)
+    {
+        Serial.print("WARNING: Pump ");
+        Serial.print(sensorIndex + 1);
+        Serial.println(" already active, skipping watering action");
+        return;
+    }
+
+    // Start non-blocking watering
+    pumpStates[sensorIndex].isActive = true;
+    pumpStates[sensorIndex].startTime = millis();
+    pumpStates[sensorIndex].duration = action.waterDuration;
+    pumpStates[sensorIndex].emergencyStop = false;
+
     // Turn on pump
     digitalWrite(RELAY_PINS[sensorIndex], LOW); // Active LOW relay
 
-    // Water for specified duration
-    delay(action.waterDuration);
-
-    // Turn off pump
-    digitalWrite(RELAY_PINS[sensorIndex], HIGH);
+    Serial.print("PUMP ");
+    Serial.print(sensorIndex + 1);
+    Serial.print(" STARTED - Duration: ");
+    Serial.print(action.waterDuration);
+    Serial.println("ms");
 }
 
 void logWateringAction(int sensorIndex, const Action &action, unsigned long inferenceTime)
@@ -342,13 +418,27 @@ void printStatusReport()
 float readTemperature()
 {
     float temperature = dht.readTemperature();
+    unsigned long currentTime = millis();
     
     // Validate sensor reading
     if (isnan(temperature) || temperature < MIN_TEMP || temperature > MAX_TEMP)
     {
         Serial.println("ERROR: Invalid temperature reading from DHT22");
+        tempHumidityHealth.consecutiveErrors++;
+        
+        if (tempHumidityHealth.consecutiveErrors >= MAX_CONSECUTIVE_ERRORS)
+        {
+            tempHumidityHealth.isDisconnected = true;
+        }
+        
         return 22.5; // Fallback to safe default
     }
+    
+    // Valid reading - update health status
+    tempHumidityHealth.lastValidReading = temperature;
+    tempHumidityHealth.lastReadingTime = currentTime;
+    tempHumidityHealth.consecutiveErrors = 0;
+    tempHumidityHealth.isDisconnected = false;
     
     return temperature;
 }
@@ -356,13 +446,27 @@ float readTemperature()
 float readHumidity()
 {
     float humidity = dht.readHumidity();
+    unsigned long currentTime = millis();
     
     // Validate sensor reading
     if (isnan(humidity) || humidity < MIN_HUMIDITY || humidity > MAX_HUMIDITY)
     {
         Serial.println("ERROR: Invalid humidity reading from DHT22");
+        tempHumidityHealth.consecutiveErrors++;
+        
+        if (tempHumidityHealth.consecutiveErrors >= MAX_CONSECUTIVE_ERRORS)
+        {
+            tempHumidityHealth.isDisconnected = true;
+        }
+        
         return 60.0; // Fallback to safe default
     }
+    
+    // Valid reading - update health status  
+    tempHumidityHealth.lastValidReading = humidity;
+    tempHumidityHealth.lastReadingTime = currentTime;
+    tempHumidityHealth.consecutiveErrors = 0;
+    tempHumidityHealth.isDisconnected = false;
     
     return humidity;
 }
@@ -392,11 +496,141 @@ void serialEvent()
             // Enable debug mode
             Serial.println("Debug mode enabled.");
         }
+        else if (command == "stop" || command == "emergency")
+        {
+            emergencyStopAllPumps();
+        }
         else if (command.startsWith("plant"))
         {
             // Change plant type: "plant 1 tomato"
             // Implementation depends on requirements
             Serial.println("Plant configuration command received.");
         }
+    }
+}
+
+void updatePumpStates()
+{
+    unsigned long currentTime = millis();
+    
+    for (int i = 0; i < 4; i++)
+    {
+        if (pumpStates[i].isActive)
+        {
+            // Check for emergency stop
+            if (pumpStates[i].emergencyStop)
+            {
+                digitalWrite(RELAY_PINS[i], HIGH); // Turn off pump
+                pumpStates[i].isActive = false;
+                Serial.print("PUMP ");
+                Serial.print(i + 1);
+                Serial.println(" EMERGENCY STOPPED");
+                continue;
+            }
+            
+            // Check if watering duration is complete
+            if (currentTime - pumpStates[i].startTime >= pumpStates[i].duration)
+            {
+                digitalWrite(RELAY_PINS[i], HIGH); // Turn off pump
+                pumpStates[i].isActive = false;
+                Serial.print("PUMP ");
+                Serial.print(i + 1);
+                Serial.println(" STOPPED - Watering complete");
+            }
+        }
+    }
+}
+
+bool validateSensorReading(int sensorIndex, float value, float minVal, float maxVal)
+{
+    if (isnan(value) || value < minVal || value > maxVal)
+    {
+        Serial.print("ERROR: Invalid sensor reading for sensor ");
+        Serial.print(sensorIndex + 1);
+        Serial.print(" - Value: ");
+        Serial.print(value);
+        Serial.print(" (Range: ");
+        Serial.print(minVal);
+        Serial.print("-");
+        Serial.print(maxVal);
+        Serial.println(")");
+        return false;
+    }
+    return true;
+}
+
+void emergencyStopAllPumps()
+{
+    for (int i = 0; i < 4; i++)
+    {
+        if (pumpStates[i].isActive)
+        {
+            pumpStates[i].emergencyStop = true;
+        }
+    }
+    Serial.println("EMERGENCY STOP: All active pumps will be stopped");
+}
+
+void updateSensorHealth(int sensorIndex, float reading, bool isValid)
+{
+    unsigned long currentTime = millis();
+    
+    if (isValid)
+    {
+        // Valid reading - reset error count and update last valid reading
+        moistureSensorHealth[sensorIndex].lastValidReading = reading;
+        moistureSensorHealth[sensorIndex].lastReadingTime = currentTime;
+        moistureSensorHealth[sensorIndex].consecutiveErrors = 0;
+        moistureSensorHealth[sensorIndex].isDisconnected = false;
+    }
+    else
+    {
+        // Invalid reading - increment error count
+        moistureSensorHealth[sensorIndex].consecutiveErrors++;
+        
+        // Check if sensor should be marked as disconnected
+        if (moistureSensorHealth[sensorIndex].consecutiveErrors >= MAX_CONSECUTIVE_ERRORS)
+        {
+            if (!moistureSensorHealth[sensorIndex].isDisconnected)
+            {
+                Serial.print("WARNING: Moisture sensor ");
+                Serial.print(sensorIndex + 1);
+                Serial.println(" marked as disconnected after consecutive errors");
+                moistureSensorHealth[sensorIndex].isDisconnected = true;
+            }
+        }
+    }
+}
+
+bool isSensorDisconnected(int sensorIndex)
+{
+    return moistureSensorHealth[sensorIndex].isDisconnected;
+}
+
+void checkSensorTimeouts()
+{
+    unsigned long currentTime = millis();
+    
+    for (int i = 0; i < 4; i++)
+    {
+        // Check if sensor hasn't provided valid reading in too long
+        if (!moistureSensorHealth[i].isDisconnected && 
+            moistureSensorHealth[i].lastReadingTime > 0 &&
+            (currentTime - moistureSensorHealth[i].lastReadingTime) > SENSOR_TIMEOUT_MS)
+        {
+            Serial.print("TIMEOUT: Moisture sensor ");
+            Serial.print(i + 1);
+            Serial.println(" marked as disconnected due to timeout");
+            moistureSensorHealth[i].isDisconnected = true;
+        }
+    }
+    
+    // Check DHT22 sensor health
+    if (!tempHumidityHealth.isDisconnected &&
+        tempHumidityHealth.lastReadingTime > 0 &&
+        (currentTime - tempHumidityHealth.lastReadingTime) > SENSOR_TIMEOUT_MS)
+    {
+        Serial.println("TIMEOUT: DHT22 sensor marked as disconnected due to timeout");
+        tempHumidityHealth.isDisconnected = true;
     }
 }

@@ -44,6 +44,70 @@ AI/ML Stack
 * **Vector DB**: Pinecone/Chroma for RAG implementation
 * **ML Models**: Random Forest for predictions, LSTM for time-series
 
+🔧 HARDWARE SETUP & SAFETY
+===========================
+
+### Pin Connections
+
+#### Arduino Uno Connections
+| Component | Arduino Pin | Notes |
+|-----------|-------------|-------|
+| Moisture Sensor 1 | A0 | Analog input |
+| Moisture Sensor 2 | A1 | Analog input |
+| Moisture Sensor 3 | A2 | Analog input |
+| Moisture Sensor 4 | A3 | Analog input |
+| Light Sensor (LDR) | A4 | Analog input |
+| DHT22 Temperature/Humidity | Digital Pin 6 | With 10kΩ pull-up resistor |
+| Relay Channel 1 | Digital Pin 2 | Controls Pump 1 |
+| Relay Channel 2 | Digital Pin 3 | Controls Pump 2 |
+| Relay Channel 3 | Digital Pin 4 | Controls Pump 3 |
+| Relay Channel 4 | Digital Pin 5 | Controls Pump 4 |
+
+#### ESP32 Connections (Optional Edge AI Gateway)
+| Component | ESP32 Pin | Notes |
+|-----------|-----------|-------|
+| Arduino TX | GPIO 16 (RX2) | Serial communication |
+| Arduino RX | GPIO 17 (TX2) | Serial communication |
+| Status LED | GPIO 2 | System status indicator |
+| Reset Button | GPIO 0 | Manual reset |
+
+### Safety Features Implemented
+
+#### 🚨 Production Safety Controls
+- **Non-blocking pump control**: Prevents system lockup during watering
+- **Emergency stop**: Serial commands "stop" or "emergency" halt all pumps immediately
+- **Sensor validation**: Bounds checking on all analog readings (0-1023)
+- **Sensor disconnection detection**: Monitors for faulty/disconnected sensors
+- **Timeout protection**: Marks sensors as disconnected after 30 seconds of invalid readings
+- **Consecutive error tracking**: Prevents false alarms from temporary sensor glitches
+- **Fallback values**: Uses safe defaults when non-critical sensors fail
+
+#### 🔬 DHT22 Integration
+- **Temperature range**: -40°C to +80°C with validation
+- **Humidity range**: 0-100% with validation  
+- **Error handling**: Automatic fallback to safe defaults (22.5°C, 60% humidity)
+- **Health monitoring**: Tracks sensor status and connection quality
+
+#### ⚡ Power Management
+- **Relay protection**: Active-LOW configuration prevents accidental activation
+- **Startup sequence**: All pumps OFF by default during initialization
+- **Memory optimization**: Efficient data structures for 2KB RAM constraint
+
+### Required Libraries
+```bash
+# PlatformIO dependencies (automatically installed)
+pio lib install "bblanchon/ArduinoJson@^6.21.2"
+pio lib install "adafruit/DHT sensor library@^1.4.4"
+```
+
+### Serial Commands for Testing
+| Command | Function |
+|---------|----------|
+| `status` | Print current system status |
+| `reset` | Reset all statistics |
+| `stop` or `emergency` | Emergency stop all pumps |
+| `debug` | Enable debug mode |
+
 🖥 APPS
 ======
 
