@@ -54,8 +54,8 @@ const unsigned long SENSOR_READ_INTERVAL = 2000;    // 2 seconds
 const unsigned long SERIAL_REPORT_INTERVAL = 10000; // 10 seconds
 const unsigned long ESP32_SEND_INTERVAL = 5000;     // 5 seconds
 
-// JSON buffer size with safety margin
-const size_t JSON_BUFFER_SIZE = 300;
+// JSON buffer size optimized for Arduino Uno RAM constraints
+const size_t JSON_BUFFER_SIZE = 150;
 
 // Global variables
 LocalMLEngine mlEngine;
@@ -351,8 +351,8 @@ void sendDataToESP32(int sensorIndex, const SensorData &sensorData,
     }
     lastESP32Send = currentTime;
     
-    // Create JSON message for ESP32 with bounds checking
-    DynamicJsonDocument doc(JSON_BUFFER_SIZE);
+    // Create JSON message for ESP32 with bounds checking (static allocation)
+    StaticJsonDocument<JSON_BUFFER_SIZE> doc;
     
     // Input validation and bounds checking
     if (sensorIndex < 0 || sensorIndex >= 4) {
@@ -367,16 +367,16 @@ void sendDataToESP32(int sensorIndex, const SensorData &sensorData,
     float light = constrain(sensorData.lightLevel, 0, 1023);
     float waterAmount = constrain(action.waterAmount, 0, 1000);
     
-    doc["sensor"] = sensorIndex + 1;
-    doc["moisture"] = moisture;
-    doc["temperature"] = temperature;
-    doc["humidity"] = humidity;
-    doc["light"] = light;
-    doc["watered"] = action.shouldWater;
-    doc["waterAmount"] = waterAmount;
-    doc["inferenceTime"] = min(inferenceTime, 999999UL); // Prevent overflow
-    doc["timestamp"] = currentTime;
-    doc["uptime"] = currentTime / 1000;
+    // Compact JSON format to save RAM
+    doc["s"] = sensorIndex + 1;
+    doc["m"] = (int)moisture;        // Integer to save space
+    doc["t"] = (int)temperature;     // Integer to save space  
+    doc["h"] = (int)humidity;        // Integer to save space
+    doc["l"] = (int)light;           // Integer to save space
+    doc["w"] = action.shouldWater ? 1 : 0;
+    if (action.shouldWater) {
+        doc["a"] = (int)waterAmount; // Only include if watering
+    }
     
     // Check if serialization will fit in buffer
     size_t jsonSize = measureJson(doc);
