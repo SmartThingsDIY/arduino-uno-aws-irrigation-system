@@ -416,7 +416,7 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
     // Check for anomalies
     if (mlEngine.detectAnomaly(sensorData))
     {
-        handleAnomaly(sensorIndex, sensorData);
+    handleAnomaly(sensorIndex, sensorData);
         totalAnomalies++;
     }
 
