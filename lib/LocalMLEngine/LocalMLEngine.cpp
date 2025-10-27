@@ -84,7 +84,7 @@ void LocalMLEngine::setGrowthStage(int sensorIndex, GrowthStage stage)
     }
 }
 
-float LocalMLEngine::predictWaterNeed(const SensorData &data)
+float LocalMLEngine::predictWaterNeed(const LocalSensorData &data)
 {
     unsigned long startTime = millis();
 
@@ -112,7 +112,7 @@ float LocalMLEngine::predictWaterNeed(const SensorData &data)
     return adjustedPrediction;
 }
 
-bool LocalMLEngine::detectAnomaly(const SensorData &data)
+bool LocalMLEngine::detectAnomaly(const LocalSensorData &data)
 {
     // Use anomaly detector for sensor fault detection
     float anomalyScore = sensorMonitor->calculateAnomalyScore(data);
@@ -130,9 +130,9 @@ bool LocalMLEngine::detectAnomaly(const SensorData &data)
     return isAnomaly;
 }
 
-Action LocalMLEngine::getImmediateAction(int sensorIndex, const SensorData &data)
+LocalAction LocalMLEngine::getImmediateAction(int sensorIndex, const LocalSensorData &data)
 {
-    Action action;
+    LocalAction action;
 
     // Validate sensor index
     if (sensorIndex < 0 || sensorIndex >= 4)
@@ -141,7 +141,7 @@ Action LocalMLEngine::getImmediateAction(int sensorIndex, const SensorData &data
     }
 
     // Create modified sensor data with plant-specific info
-    SensorData modifiedData = data;
+    LocalSensorData modifiedData = data;
     modifiedData.plantType = plantTypes[sensorIndex];
     modifiedData.growthStage = growthStages[sensorIndex];
     modifiedData.lastWatered = (millis() - lastWateringTime[sensorIndex]) / 3600000; // Convert to hours
@@ -196,7 +196,7 @@ Action LocalMLEngine::getImmediateAction(int sensorIndex, const SensorData &data
     return action;
 }
 
-float LocalMLEngine::calculateFeatureScore(const SensorData &data)
+float LocalMLEngine::calculateFeatureScore(const LocalSensorData &data)
 {
     // Normalize features to 0-1 scale and calculate weighted score
     float moistureScore = constrain(data.moisture / 1023.0, 0.0, 1.0);
