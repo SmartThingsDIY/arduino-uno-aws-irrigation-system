@@ -33,6 +33,41 @@
 #endif
 #include <avr/wdt.h>  // Watchdog timer
 
+// --- BEGIN: Add missing type and constant definitions for compilation ---
+
+// Action struct definition
+struct Action {
+    bool shouldWater = false;
+    unsigned long waterDuration = 0; // ms
+    float waterAmount = 0;           // ml
+    bool isFailsafe = false;
+};
+
+// SensorData struct definition
+struct SensorData {
+    float moisture = 0;
+    float temperature = 0;
+    float humidity = 0;
+    float lightLevel = 0;
+};
+
+// Plant type constants
+enum PlantType {
+    TOMATO,
+    LETTUCE,
+    BASIL,
+    GENERIC
+};
+
+// Growth stage constants
+enum GrowthStage {
+    VEGETATIVE,
+    FLOWERING,
+    MATURE
+};
+
+// --- END: Add missing type and constant definitions for compilation ---
+
 // Pin definitions
 const int MOISTURE_PINS[4] = {A0, A1, A2, A3};
 const int RELAY_PINS[4] = {2, 3, 4, 5};

@@ -1,3 +1,33 @@
+#ifndef LOCALMLENGINE_H
+#define LOCALMLENGINE_H
+
+// Minimal stub implementation for LocalMLEngine for compilation and testing.
+struct Action {
+    bool shouldWater = false;
+    unsigned long waterDuration = 0;
+    float waterAmount = 0;
+    bool isFailsafe = false;
+};
+
+struct SensorData {
+    float moisture = 0;
+    float temperature = 0;
+    float humidity = 0;
+    float lightLevel = 0;
+};
+
+class LocalMLEngine {
+public:
+    bool begin() { return true; }
+    void setPlantType(int idx, int type) {}
+    void setGrowthStage(int idx, int stage) {}
+    Action getImmediateAction(int idx, const SensorData& data) { return Action(); }
+    bool detectAnomaly(const SensorData& data) { return false; }
+    float getAverageInferenceTime() { return 1.5; }
+    void resetStats() {}
+};
+
+#endif // LOCALMLENGINE_H
 #ifndef LOCAL_ML_ENGINE_H
 #define LOCAL_ML_ENGINE_H
 
