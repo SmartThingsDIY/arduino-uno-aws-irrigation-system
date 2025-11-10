@@ -16,24 +16,28 @@ edge-ai/
 ## Implementation Phases
 
 ### Phase 1: Arduino Embedded ML (Weeks 1-2)
+
 - **Location**: `arduino-ml/`
 - **Capabilities**: Decision trees, lookup tables, anomaly detection
 - **Response Time**: <100ms
 - **Memory**: <30KB Flash, <1KB RAM
 
 ### Phase 2: ESP32 TensorFlow Lite (Weeks 3-4)
+
 - **Location**: `esp32-ml/`
 - **Capabilities**: Moisture prediction, weather patterns, sensor fusion
 - **Response Time**: <1s
 - **Memory**: <100KB Flash, <20KB RAM
 
 ### Phase 3: Raspberry Pi Gateway (Weeks 5-6)
+
 - **Location**: `pi-gateway/`
 - **Capabilities**: Computer vision, local LLM, federated learning
 - **Response Time**: <5s
 - **Memory**: <5MB models
 
 ### Phase 4: System Integration (Weeks 7-8)
+
 - Multi-tier decision making
 - Graceful degradation
 - Energy optimization
@@ -41,12 +45,14 @@ edge-ai/
 ## Hardware Requirements
 
 ### Minimum (ESP32 Upgrade)
+
 - Arduino Uno (existing)
 - ESP32 DevKit (240MHz, 520KB RAM, 4MB Flash)
 - MicroSD card module
 - **Cost**: ~$15
 
 ### Recommended (Full Edge AI)
+
 - Arduino Uno (existing)
 - ESP32 DevKit
 - Raspberry Pi Zero 2 W
@@ -55,6 +61,7 @@ edge-ai/
 - **Cost**: ~$50
 
 ### Advanced (High Performance)
+
 - Arduino Mega 2560
 - ESP32-S3 with PSRAM
 - Raspberry Pi 4 (2GB)
@@ -78,12 +85,12 @@ edge-ai/
 
 ## Model Performance
 
-| Model | Size | Accuracy | Latency |
-|-------|------|----------|---------|
-| Decision Tree (Arduino) | <30KB | >90% | <10ms |
-| LSTM Moisture Prediction | <50KB | >85% | <100ms |
-| Anomaly Detection | <20KB | >95% | <50ms |
-| Plant Health CV | <5MB | >80% | <500ms |
+| Model                    | Size  | Accuracy | Latency |
+| ------------------------ | ----- | -------- | ------- |
+| Decision Tree (Arduino)  | <30KB | >90%     | <10ms   |
+| LSTM Moisture Prediction | <50KB | >85%     | <100ms  |
+| Anomaly Detection        | <20KB | >95%     | <50ms   |
+| Plant Health CV          | <5MB  | >80%     | <500ms  |
 
 ## Communication Protocol
 
