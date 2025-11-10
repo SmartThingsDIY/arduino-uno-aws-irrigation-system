@@ -1,0 +1,1 @@
+C:\Users\Thoma\AppData\Roaming\Python\Python314\Scripts\platformio.exe device monitor

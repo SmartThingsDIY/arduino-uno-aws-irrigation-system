@@ -33,9 +33,44 @@
 #endif
 #include <avr/wdt.h>  // Watchdog timer
 
+// --- BEGIN: Add missing type and constant definitions for compilation ---
+
+// Action struct definition
+struct Action {
+    bool shouldWater = false;
+    unsigned long waterDuration = 0; // ms
+    float waterAmount = 0;           // ml
+    bool isFailsafe = false;
+};
+
+// SensorData struct definition
+struct SensorData {
+    float moisture = 0;
+    float temperature = 0;
+    float humidity = 0;
+    float lightLevel = 0;
+};
+
+// Plant type constants
+enum PlantType {
+    TOMATO,
+    LETTUCE,
+    BASIL,
+    GENERIC
+};
+
+// Growth stage constants
+enum GrowthStage {
+    VEGETATIVE,
+    FLOWERING,
+    MATURE
+};
+
+// --- END: Add missing type and constant definitions for compilation ---
+
 // Pin definitions
-const int MOISTURE_PINS[4] = {A0, A1, A2, A3};
-const int RELAY_PINS[4] = {2, 3, 4, 5};
+const int MOISTURE_PINS[2] PROGMEM = {A0, A1};
+const int RELAY_PINS[2] PROGMEM = {2, 3};
 const int TEMP_HUMIDITY_PIN = 6; // DHT22 sensor
 const int LIGHT_PIN = A4;        // LDR sensor
 const int ESP32_RX_PIN = 7;      // Arduino TX -> ESP32 RX
@@ -93,22 +128,15 @@ struct PumpState {
     uint8_t failsafeTriggered : 1;
     uint8_t wateringCount : 6;       // 0-63 waterings (enough for daily limit)
 };
-PumpState pumpStates[4] = {{false, 0, 0, 0, 0, 0, 0}};
+PumpState pumpStates[2] = {{false, 0, 0, 0, 0, 0, 0}};
 
 // Memory-optimized sensor health monitoring
 struct SensorHealth {
-    uint16_t lastValidReading;       // Last known good reading
-    uint16_t lastReading;            // Most recent reading (for stuck detection)
-    uint16_t lastUpdateTime;         // Reduced to 16-bit (65s overflow, but adequate)
-    uint8_t consecutiveErrors : 4;   // 4 bits (0-15 errors)
-    uint8_t stuckReadingCount : 4;   // 4 bits (0-15 stuck count)
-    uint8_t isDisconnected : 1;      // 1 bit flag
-    uint8_t isStuck : 1;            // 1 bit flag
-    uint8_t isFailed : 1;           // 1 bit flag
-    uint8_t reserved : 1;           // 1 bit reserved for future use
+    uint16_t lastValidReading; // Last known good reading
+    bool isFailed;             // Sensor failure flag
 };
-SensorHealth moistureSensorHealth[4] = {{0, 0, 0, 0, 0, 0, 0, 0}};
-SensorHealth environmentalSensorHealth = {0, 0, 0, 0, 0, 0, 0, 0}; // DHT22
+SensorHealth moistureSensorHealth[2] = {{0, false}};
+SensorHealth environmentalSensorHealth = {0, false}; // DHT22
 
 // System health tracking - reduced to save memory
 uint16_t lastSystemHealthCheck = 0;  // 16-bit seconds
@@ -123,10 +151,10 @@ uint8_t totalAnomalies = 0;
 // Function declarations
 void processAllSensors();
 void processSensor(int sensorIndex, float temperature, float humidity, float lightLevel);
-void executeWateringAction(int sensorIndex, const Action &action);
-void logWateringAction(int sensorIndex, const Action &action, unsigned long inferenceTime);
-void handleAnomaly(int sensorIndex, const SensorData &sensorData);
-void sendDataToESP32(int sensorIndex, const SensorData &sensorData, const Action &action, unsigned long inferenceTime);
+void executeWateringAction(int sensorIndex, const LocalAction &action);
+void logWateringAction(int sensorIndex, const LocalAction &action, unsigned long inferenceTime);
+void handleAnomaly(int sensorIndex, const LocalSensorData &sensorData);
+void sendDataToESP32(int sensorIndex, const LocalSensorData &sensorData, const LocalAction &action, unsigned long inferenceTime);
 void printStatusReport();
 float readTemperature();
 float readHumidity();
@@ -134,10 +162,9 @@ void updatePumpStates();
 bool validateSensorReading(int sensorIndex, float value, float minVal, float maxVal);
 void emergencyStopAllPumps();
 void updateSensorHealth(int sensorIndex, uint16_t reading, bool isValid);
-bool isSensorDisconnected(int sensorIndex);
+
 
 // NEW: Production safety functions
-void initializeWatchdog();
 void resetWatchdog();
 void performSystemHealthCheck();
 bool checkPumpFailsafe(int pumpIndex);
@@ -151,8 +178,6 @@ void performEmergencyShutdown(const char* reason);
 
 void setup()
 {
-    // CRITICAL: Initialize watchdog timer FIRST for safety
-    initializeWatchdog();
     
     Serial.begin(9600);
     esp32Serial.begin(9600);
@@ -160,11 +185,11 @@ void setup()
     dht.begin();
 #endif
     
-    Serial.println("=== IRRIGATION STARTUP ===");
-    Serial.println("Init safety systems...");
+    Serial.println(F("=== IRRIGATION STARTUP ==="));
+    Serial.println(F("Init safety systems..."));
 
     // Initialize pins with safety checks
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         pinMode(MOISTURE_PINS[i], INPUT);
         pinMode(RELAY_PINS[i], OUTPUT);
@@ -173,7 +198,7 @@ void setup()
         // Verify pump is actually OFF
         delay(10);
         // Initialize sensor health tracking
-        moistureSensorHealth[i].lastUpdateTime = (uint16_t)(millis() / 1000); // Store in seconds
+    // ...existing code...
         pumpStates[i].lastWateringTime = millis(); // Prevent immediate watering
     }
 
@@ -186,12 +211,12 @@ void setup()
 #ifndef MEMORY_OPTIMIZED
     dht.begin();
 #endif
-    Serial.println("DHT22 sensor initialized");
+    Serial.println(F("DHT22 sensor initialized"));
 
     // Initialize ML engine
     if (!mlEngine.begin())
     {
-        Serial.println("ERROR: Failed to initialize ML engine!");
+    Serial.println(F("ERROR: Failed to initialize ML engine!"));
         while (1)
             delay(1000); // Halt execution
     }
@@ -208,14 +233,14 @@ void setup()
     mlEngine.setGrowthStage(2, FLOWERING);
     mlEngine.setGrowthStage(3, MATURE);
 
-    Serial.println("Smart Irrigation System Started!");
-    Serial.println("Plants: Tomato, Lettuce, Basil, Mint");
+    Serial.println(F("Smart Irrigation System Started!"));
+    Serial.println(F("Plants: Tomato, Lettuce, Basil, Mint"));
     
     // Final safety check and initialization complete
-    Serial.println("=== SAFETY INIT COMPLETE ===");
+    Serial.println(F("=== SAFETY INIT COMPLETE ==="));
     Serial.print("WDT:"); Serial.print(WATCHDOG_TIMEOUT/1000); Serial.println("s");
     Serial.print("MaxPump:"); Serial.print(MAX_PUMP_DURATION/1000); Serial.println("s");
-    Serial.println("Ready.");
+    Serial.println(F("Ready."));
     
     logSystemEvent("SYSTEM_STARTUP");
     resetWatchdog();
@@ -269,7 +294,7 @@ void loop()
         {
             logSystemEvent("MANUAL_RESET");
             systemFailsafeMode = false;
-            Serial.println("System reset from failsafe mode");
+            Serial.println(F("System reset from failsafe mode"));
         }
         else if (strcmp(command, "status") == 0)
         {
@@ -289,7 +314,7 @@ void processAllSensors()
     float lightLevel = analogRead(LIGHT_PIN);
 
     // Process each plant sensor
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         processSensor(i, temperature, humidity, lightLevel);
     }
@@ -306,34 +331,24 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
     bool validHumidity = validateSensorReading(sensorIndex, humidity, MIN_HUMIDITY, MAX_HUMIDITY);
     bool validLight = validateSensorReading(sensorIndex, lightLevel, MIN_LIGHT, MAX_LIGHT);
 
-    // ENHANCED sensor health tracking with stuck detection
+    // ENHANCED sensor health tracking
     updateSensorHealth(sensorIndex, (uint16_t)moisture, validMoisture);
-    moistureSensorHealth[sensorIndex].lastUpdateTime = (uint16_t)(millis() / 1000);
-    
-    // Detect stuck sensors
-    if (detectStuckSensor(sensorIndex, (uint16_t)moisture))
-    {
-        Serial.print("WARNING: Sensor ");
-        Serial.print(sensorIndex + 1);
-        Serial.println(" appears to be stuck - readings not changing");
-        // Continue processing but with caution
-    }
 
     // Check if moisture sensor is disconnected or failed
-    if (isSensorDisconnected(sensorIndex) || moistureSensorHealth[sensorIndex].isFailed)
+        if (moistureSensorHealth[sensorIndex].isFailed)
     {
-        Serial.print("CRITICAL: Moisture sensor ");
+    Serial.print(F("CRITICAL: Moisture sensor "));
         Serial.print(sensorIndex + 1);
-        Serial.println(" is failed/disconnected - skipping processing");
+    Serial.println(F(" is failed/disconnected - skipping processing"));
         return;
     }
 
     // If critical sensors are invalid, skip processing
     if (!validMoisture)
     {
-        Serial.print("CRITICAL: Skipping sensor ");
+    Serial.print(F("CRITICAL: Skipping sensor "));
         Serial.print(sensorIndex + 1);
-        Serial.println(" processing due to invalid moisture reading");
+    Serial.println(F(" processing due to invalid moisture reading"));
         return;
     }
 
@@ -341,29 +356,29 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
     if (!validTemperature)
     {
         temperature = 22.5; // Fallback temperature
-        Serial.println("Using fallback temperature value");
+    Serial.println(F("Using fallback temperature value"));
     }
     if (!validHumidity)
     {
         humidity = 60.0; // Fallback humidity
-        Serial.println("Using fallback humidity value");
+    Serial.println(F("Using fallback humidity value"));
     }
     if (!validLight)
     {
         lightLevel = 500; // Fallback light level
-        Serial.println("Using fallback light level value");
+    Serial.println(F("Using fallback light level value"));
     }
 
     // Create sensor data structure
-    SensorData sensorData;
-    sensorData.moisture = moisture;
-    sensorData.temperature = temperature;
-    sensorData.humidity = humidity;
-    sensorData.lightLevel = lightLevel;
+    LocalSensorData sensorData;
+    sensorData.moisture = (int16_t)moisture;
+    sensorData.temperature = (int16_t)(temperature * 10); // store as tenths
+    sensorData.humidity = (int16_t)(humidity * 10);       // store as tenths
+    sensorData.lightLevel = (int16_t)lightLevel;
 
     // Get AI decision
     unsigned long startTime = micros();
-    Action action = mlEngine.getImmediateAction(sensorIndex, sensorData);
+    LocalAction action = mlEngine.getImmediateAction(sensorIndex, sensorData);
     unsigned long inferenceTime = micros() - startTime;
 
     totalDecisions++;
@@ -371,17 +386,17 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
     // Execute action
     if (action.shouldWater)
     {
-        executeWateringAction(sensorIndex, action);
+    executeWateringAction(sensorIndex, action);
         totalWateringActions++;
 
         // Log watering action
-        logWateringAction(sensorIndex, action, inferenceTime);
+    logWateringAction(sensorIndex, action, inferenceTime);
     }
 
     // Check for anomalies
     if (mlEngine.detectAnomaly(sensorData))
     {
-        handleAnomaly(sensorIndex, sensorData);
+    handleAnomaly(sensorIndex, sensorData);
         totalAnomalies++;
     }
 
@@ -389,14 +404,14 @@ void processSensor(int sensorIndex, float temperature, float humidity, float lig
     sendDataToESP32(sensorIndex, sensorData, action, inferenceTime);
 }
 
-void executeWateringAction(int sensorIndex, const Action &action)
+void executeWateringAction(int sensorIndex, const LocalAction &action)
 {
     // CRITICAL SAFETY CHECKS
     
     // Check if system is in failsafe mode
     if (systemFailsafeMode)
     {
-        Serial.println("BLOCKED: System in failsafe mode, no watering allowed");
+    Serial.println(F("BLOCKED: System in failsafe mode, no watering allowed"));
         logSystemEvent("WATERING_BLOCKED_FAILSAFE", sensorIndex);
         return;
     }
@@ -404,9 +419,9 @@ void executeWateringAction(int sensorIndex, const Action &action)
     // Check if pump is already active
     if (pumpStates[sensorIndex].isActive)
     {
-        Serial.print("WARNING: Pump ");
+    Serial.print(F("WARNING: Pump "));
         Serial.print(sensorIndex + 1);
-        Serial.println(" already active, skipping watering action");
+    Serial.println(F(" already active, skipping watering action"));
         logSystemEvent("WATERING_BLOCKED_ACTIVE", sensorIndex);
         return;
     }
@@ -414,9 +429,9 @@ void executeWateringAction(int sensorIndex, const Action &action)
     // Validate pump operation before starting
     if (!validatePumpOperation(sensorIndex, action.waterDuration))
     {
-        Serial.print("BLOCKED: Pump ");
+    Serial.print(F("BLOCKED: Pump "));
         Serial.print(sensorIndex + 1);
-        Serial.println(" operation validation failed");
+    Serial.println(F(" operation validation failed"));
         return;
     }
 
@@ -424,11 +439,11 @@ void executeWateringAction(int sensorIndex, const Action &action)
     unsigned long safeDuration = min(action.waterDuration, MAX_PUMP_DURATION);
     if (action.waterDuration > MAX_PUMP_DURATION)
     {
-        Serial.print("WARNING: Duration capped from ");
+    Serial.print(F("WARNING: Duration capped from "));
         Serial.print(action.waterDuration);
-        Serial.print("ms to ");
+    Serial.print(F("ms to "));
         Serial.print(safeDuration);
-        Serial.println("ms for safety");
+    Serial.println(F("ms for safety"));
     }
 
     // Start non-blocking watering with safety tracking
@@ -446,50 +461,50 @@ void executeWateringAction(int sensorIndex, const Action &action)
     // Brief verification delay
     delay(50);
     
-    Serial.print("PUMP ");
+    Serial.print(F("PUMP "));
     Serial.print(sensorIndex + 1);
-    Serial.print(" STARTED - Duration: ");
+    Serial.print(F(" STARTED - Duration: "));
     Serial.print(safeDuration);
-    Serial.print("ms | Count today: ");
+    Serial.print(F("ms | Count today: "));
     Serial.print(pumpStates[sensorIndex].wateringCount);
-    Serial.print(" | Duration: ");
+    Serial.print(F(" | Duration: "));
     Serial.print(safeDuration);
-    Serial.println("ms");
+    Serial.println(F("ms"));
     
     logSystemEvent("PUMP_STARTED", sensorIndex);
 }
 
-void logWateringAction(int sensorIndex, const Action &action, unsigned long inferenceTime)
+void logWateringAction(int sensorIndex, const LocalAction &action, unsigned long inferenceTime)
 {
-    Serial.print("WATERING: Plant ");
+    Serial.print(F("WATERING: Plant "));
     Serial.print(sensorIndex + 1);
-    Serial.print(" | Amount: ");
-    Serial.print(action.waterAmount);
-    Serial.print("ml | Duration: ");
+    Serial.print(F(" | Amount: "));
+    Serial.print(action.waterAmount); // uint16_t, prints as integer ml
+    Serial.print(F("ml | Duration: "));
     Serial.print(action.waterDuration);
-    Serial.print("ms | Inference: ");
+    Serial.print(F("ms | Inference: "));
     Serial.print(inferenceTime);
-    Serial.print("μs");
+    Serial.print(F("μs"));
 
     if (action.isFailsafe)
     {
-        Serial.print(" | FAILSAFE");
+    Serial.print(F(" | FAILSAFE"));
     }
 
     Serial.println();
 }
 
-void handleAnomaly(int sensorIndex, const SensorData &sensorData)
+void handleAnomaly(int sensorIndex, const LocalSensorData &sensorData)
 {
-    Serial.print("ANOMALY: Sensor ");
+    Serial.print(F("ANOMALY: Sensor "));
     Serial.print(sensorIndex + 1);
-    Serial.print(" | Moisture: ");
+    Serial.print(F(" | Moisture: "));
     Serial.print(sensorData.moisture);
-    Serial.print(" | Temp: ");
-    Serial.print(sensorData.temperature);
-    Serial.print(" | Humidity: ");
-    Serial.print(sensorData.humidity);
-    Serial.print(" | Light: ");
+    Serial.print(F(" | Temp: "));
+    Serial.print(sensorData.temperature / 10.0f); // convert back to float for display
+    Serial.print(F(" | Humidity: "));
+    Serial.print(sensorData.humidity / 10.0f);    // convert back to float for display
+    Serial.print(F(" | Light: "));
     Serial.println(sensorData.lightLevel);
 
     // Flash LED or send alert (implementation depends on hardware)
@@ -498,8 +513,8 @@ void handleAnomaly(int sensorIndex, const SensorData &sensorData)
     // digitalWrite(LED_BUILTIN, LOW);
 }
 
-void sendDataToESP32(int sensorIndex, const SensorData &sensorData,
-                     const Action &action, unsigned long inferenceTime)
+void sendDataToESP32(int sensorIndex, const LocalSensorData &sensorData,
+                     const LocalAction &action, unsigned long inferenceTime)
 {
     // Rate limiting - only send every ESP32_SEND_INTERVAL
     unsigned long currentTime = millis();
@@ -513,16 +528,16 @@ void sendDataToESP32(int sensorIndex, const SensorData &sensorData,
     
     // Input validation and bounds checking
     if (sensorIndex < 0 || sensorIndex >= 4) {
-        Serial.println("ERROR: Invalid sensor index for ESP32 transmission");
+    Serial.println(F("ERROR: Invalid sensor index for ESP32 transmission"));
         return;
     }
     
     // Sanitize sensor values to prevent overflow
-    float moisture = constrain(sensorData.moisture, 0, 1023);
-    float temperature = constrain(sensorData.temperature, -40, 85);
-    float humidity = constrain(sensorData.humidity, 0, 100);
-    float light = constrain(sensorData.lightLevel, 0, 1023);
-    float waterAmount = constrain(action.waterAmount, 0, 1000);
+    float moisture = constrain((float)sensorData.moisture, 0, 1023);
+    float temperature = constrain(sensorData.temperature / 10.0f, -40, 85);
+    float humidity = constrain(sensorData.humidity / 10.0f, 0, 100);
+    float light = constrain((float)sensorData.lightLevel, 0, 1023);
+    float waterAmount = constrain((float)action.waterAmount, 0, 1000);
     
     // Compact JSON format to save RAM
     doc["s"] = sensorIndex + 1;
@@ -571,7 +586,7 @@ void printStatusReport()
 
     // Print current sensor readings
     Serial.println("\nCurrent Sensor Readings:");
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         Serial.print("  Plant ");
         Serial.print(i + 1);
@@ -698,7 +713,7 @@ void updatePumpStates()
 {
     unsigned long currentTime = millis();
     
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         if (pumpStates[i].isActive)
         {
@@ -767,7 +782,7 @@ bool validateSensorReading(int sensorIndex, float value, float minVal, float max
 
 void emergencyStopAllPumps()
 {
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         if (pumpStates[i].isActive)
         {
@@ -781,47 +796,16 @@ void updateSensorHealth(int sensorIndex, uint16_t reading, bool isValid)
 {
     if (isValid)
     {
-        // Valid reading - reset error count
-        moistureSensorHealth[sensorIndex].lastValidReading = reading;
-        moistureSensorHealth[sensorIndex].consecutiveErrors = 0;
-        moistureSensorHealth[sensorIndex].isDisconnected = false;
+           moistureSensorHealth[sensorIndex].lastValidReading = reading;
+           moistureSensorHealth[sensorIndex].isFailed = false;
     }
     else
     {
-        // Invalid reading - increment error count
-        moistureSensorHealth[sensorIndex].consecutiveErrors++;
-        
-        // Check if sensor should be marked as disconnected
-        if (moistureSensorHealth[sensorIndex].consecutiveErrors >= MAX_CONSECUTIVE_SENSOR_ERRORS)
-        {
-            if (!moistureSensorHealth[sensorIndex].isDisconnected)
-            {
-                Serial.print("WARNING: Moisture sensor ");
-                Serial.print(sensorIndex + 1);
-                Serial.println(" marked as disconnected");
-                moistureSensorHealth[sensorIndex].isDisconnected = true;
-            }
-        }
+           moistureSensorHealth[sensorIndex].isFailed = true;
     }
 }
 
-bool isSensorDisconnected(int sensorIndex)
-{
-    return moistureSensorHealth[sensorIndex].isDisconnected;
-}
 
-// ============================================================================
-// PRODUCTION SAFETY FUNCTIONS - Critical Error Handling
-// ============================================================================
-
-void initializeWatchdog()
-{
-    // Configure watchdog timer for 8 seconds (maximum for Arduino Uno)
-    wdt_enable(WDTO_8S);
-    lastWatchdogReset = millis();
-    
-    Serial.println("Watchdog timer initialized (8s timeout)");
-}
 
 void resetWatchdog()
 {
@@ -835,24 +819,8 @@ void performSystemHealthCheck()
     bool systemHealthy = true;
     
     // Check sensor health
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
-        // Check for sensor timeouts (convert to seconds for comparison)
-        if ((currentTime / 1000) - moistureSensorHealth[i].lastUpdateTime > (SENSOR_TIMEOUT / 1000))
-        {
-            if (!moistureSensorHealth[i].isFailed)
-            {
-                handleSensorFailure(i, "SENSOR_TIMEOUT");
-                systemHealthy = false;
-            }
-        }
-        
-        // Check for stuck sensors
-        if (moistureSensorHealth[i].isStuck)
-        {
-            systemHealthy = false;
-        }
-        
         // Check pump daily limits
         if (pumpStates[i].wateringCount > 20) // Max 20 waterings per day
         {
@@ -927,7 +895,7 @@ void triggerPumpFailsafe(int pumpIndex, const char* reason)
     
     // If multiple pumps fail, enter system failsafe mode
     int failsafeCount = 0;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         if (pumpStates[i].failsafeTriggered) failsafeCount++;
     }
@@ -938,59 +906,24 @@ void triggerPumpFailsafe(int pumpIndex, const char* reason)
     }
 }
 
-bool detectStuckSensor(int sensorIndex, uint16_t reading)
-{
-    SensorHealth* sensor = &moistureSensorHealth[sensorIndex];
-    
-    // Check if reading is identical to previous readings
-    if (abs((int)reading - (int)sensor->lastReading) < STUCK_SENSOR_THRESHOLD)
-    {
-        sensor->stuckReadingCount++;
-        
-        if (sensor->stuckReadingCount >= MAX_STUCK_SENSOR_COUNT)
-        {
-            if (!sensor->isStuck)
-            {
-                sensor->isStuck = true;
-                handleSensorFailure(sensorIndex, "STUCK_SENSOR");
-                return true;
-            }
-        }
-    }
-    else
-    {
-        // Reading varied enough, reset stuck counter
-        sensor->stuckReadingCount = 0;
-        sensor->isStuck = false;
-    }
-    
-    sensor->lastReading = reading;
-    return sensor->isStuck;
-}
 
 void handleSensorFailure(int sensorIndex, const char* failureType)
 {
     SensorHealth* sensor = &moistureSensorHealth[sensorIndex];
-    
     sensor->isFailed = true;
-    sensor->lastUpdateTime = (uint16_t)(millis() / 1000); // Reset timeout to prevent spam
-    
     Serial.print("SENSOR FAILURE: Sensor ");
     Serial.print(sensorIndex + 1);
     Serial.print(" - Type: ");
     Serial.println(failureType);
-    
     logSystemEvent("SENSOR_FAILURE", sensorIndex);
-    
     // Count failed sensors
     int failedSensorCount = 0;
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         if (moistureSensorHealth[i].isFailed) failedSensorCount++;
     }
-    
     // If majority of sensors fail, enter failsafe mode
-    if (failedSensorCount >= 3)
+    if (failedSensorCount >= 2)
     {
         enterSystemFailsafeMode("MAJORITY_SENSOR_FAILURE");
     }
@@ -1005,12 +938,9 @@ void enterSystemFailsafeMode(const char* reason)
     Serial.println("========================================");
     Serial.println("    SYSTEM FAILSAFE MODE ACTIVATED");
     Serial.println("========================================");
-    Serial.print("Reason: ");
     Serial.println(reason);
-    
     // Stop all pumps immediately
     emergencyStopAllPumps();
-    
     // Disable all automatic watering
     Serial.println("All automatic watering DISABLED");
     Serial.println("Manual reset required to resume operation");
@@ -1077,7 +1007,7 @@ void performEmergencyShutdown(const char* reason)
     Serial.println(reason);
     
     // Immediately stop all pumps
-    for (int i = 0; i < 4; i++)
+    for (int i = 0; i < 2; i++)
     {
         digitalWrite(RELAY_PINS[i], HIGH); // Turn off all pumps
         pumpStates[i].isActive = false;
